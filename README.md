@@ -1,4 +1,4 @@
 mod-mongo-persistor
 ===================
 
-MongoDB Module
+MongoDB Module for Vert.x

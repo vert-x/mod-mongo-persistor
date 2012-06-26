@@ -1,0 +1,35 @@
+<project name="MongoPersistor" default="dist" basedir=".">
+
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="target" location="target"/>
+  <property name="lib" location="lib"/>
+  <property name="module-name" value="mongo-persistor"/>
+  <property name="version" value="0.1"/>
+
+  <target name="init">
+    <mkdir dir="${build}/${module-name}"/>
+  </target>
+
+  <path id="compile-classpath">
+    <fileset dir="${lib}">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src}" destdir="${build}/${module-name}" classpathref="compile-classpath" debug="on"
+           includeantruntime="false" target="1.7" source="1.7"/>
+  </target>
+
+  <target name="dist" depends="compile">
+    <mkdir dir="${target}"/>
+    <copy file="mod.json" todir="${build}"/>
+    <jar jarfile="${target}/${module-name}-v${version}.jar" basedir="${build}"/>
+  </target>
+
+  <target name="clean" description="clean up" >
+    <delete dir="${build}"/>
+    <delete dir="${target}"/>
+  </target>
+</project>
