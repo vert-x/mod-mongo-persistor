@@ -1,29 +1,46 @@
 <project name="mongo-persistor" default="dist" basedir=".">
 
-  <property name="src" location="src"/>
-  <property name="build" location="build"/>
-  <property name="target" location="target"/>
-  <property name="lib" location="lib"/>
+  <!-- Environment variable VERTX_HOME must be set to your install of vert.x -->
+
+  <property name="src" value="src"/>
+  <property name="src-main" value="main"/>
+  <property name="build" value="build"/>
+  <property name="mods-dir" value="mods"/>
+  <property name="target" value="target"/>
+  <property name="lib" value="lib"/>
   <property name="module-name" value="mongo-persistor"/>
   <property name="version" value="1.0"/>
   <property name="module-dir" value="${module-name}-v${version}"/>
+  <property environment="env"/>
+
+  <property name="build-test" value="test"/>
+  <property name="src-test" value="test"/>
+  <property name="src-test-verticles" value="test-verticles"/>
+  <property name="lib-test" value="lib-test"/>
+  <property name="test-results" value="test-results"/>
 
   <target name="init">
     <mkdir dir="${build}/${module-dir}"/>
+    <mkdir dir="${build}/${build-test}"/>
   </target>
 
   <path id="compile-classpath">
     <fileset dir="${lib}">
       <include name="*.jar"/>
     </fileset>
+    <fileset dir="${env.VERTX_HOME}/lib/jars">
+      <include name="*.jar"/>
+    </fileset>
   </path>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}/${module-dir}" classpathref="compile-classpath" debug="on"
+    <javac srcdir="${src}/${src-main}" destdir="${build}/${module-dir}" classpathref="compile-classpath" debug="on"
            includeantruntime="false" target="1.7" source="1.7"/>
   </target>
 
-  <target name="dist" depends="compile">
+  <!-- Creates the mod.zip file in the ${target} directory.
+  This can then be submitted to the Vert.x module repository -->
+  <target name="dist" depends="clean, compile">
     <mkdir dir="${target}"/>
     <copy file="mod.json" todir="${build}/${module-dir}"/>
     <copy todir="${build}/${module-dir}/lib">
@@ -34,8 +51,54 @@
     <zip destfile="${target}/mod.zip" basedir="${build}"/>
   </target>
 
-  <target name="clean" description="clean up" >
+  <target name="clean">
     <delete dir="${build}"/>
+    <delete dir="${mods-dir}"/>
+    <delete dir="${test-results}"/>
     <delete dir="${target}"/>
+    <delete dir="${mods-dir}"/>
   </target>
+
+  <path id="compile-test-classpath">
+    <path refid="compile-classpath"/>
+    <fileset dir="${lib-test}">
+      <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <path id="run-test-classpath">
+    <path refid="compile-test-classpath"/>
+    <pathelement location="${build}/${build-test}"/>
+    <pathelement location="${src}/${src-test-verticles}/js"/>
+    <pathelement location="${env.VERTX_HOME}/lib/javascript"/>
+    <pathelement location="${env.VERTX_HOME}/lib/ruby"/>
+  </path>
+
+  <target name="compile-tests" depends="compile">
+    <javac srcdir="${src}/${src-test}:${src}/${src-test-verticles}/java" destdir="${build}/${build-test}" classpathref="compile-test-classpath" debug="on"
+           includeantruntime="false" target="1.7" source="1.7"/>
+  </target>
+
+  <target name="tests" depends="dist, compile-tests">
+    <delete dir="${test-results}"/>
+    <mkdir dir="${test-results}"/>
+
+    <!-- Unzip the module that we built into the mods directory -->
+    <unzip src="${target}/mod.zip" dest="${mods-dir}"/>
+
+    <junit printsummary="yes" timeout="120000" showoutput="true">
+      <sysproperty key="java.util.logging.config.file" value="${env.VERTX_HOME}/conf/logging.properties"/>
+      <!-- Point vert.x at local module directory where we built the module -->
+      <sysproperty key="vertx.mods" value="${mods-dir}"/>
+      <classpath refid="run-test-classpath"/>
+      <batchtest haltonfailure="yes" haltonerror="yes" fork="yes" todir="${test-results}">
+        <formatter type="plain" usefile="yes"/>
+        <fileset dir="${build}/${build-test}">
+          <include name="org/vertx/mods/tests/**/*Test.class"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+
 </project>
