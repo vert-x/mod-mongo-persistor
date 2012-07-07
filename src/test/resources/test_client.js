@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-load('javascript/test_utils.js')
+load('test_utils.js')
 load('vertx.js')
 
 var tu = new TestUtils();

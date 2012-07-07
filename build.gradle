@@ -1,0 +1,58 @@
+buildscript {
+	repositories {
+		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+		mavenCentral()
+	}
+	dependencies {
+        classpath "org.vert-x:build-tools:$vertxBuildToolsVersion"
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'vertx-rhino'
+
+defaultTasks = ['assemble']
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+configurations {
+    vertxProvided.extendsFrom(compile)
+}
+
+sourceSets.main {
+    compileClasspath = configurations.vertxProvided
+}
+
+repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.mongodb:mongo-java-driver:$mongoVersion"
+    vertxProvided("org.vert-x:vertx-core:$vertxVersion")
+    vertxProvided("org.vert-x:vertx-platform:$vertxVersion")
+
+    testCompile("org.vert-x:vertx-core:$vertxVersion")
+    testCompile("org.vert-x:vertx-platform:$vertxVersion")
+    testCompile("org.vert-x:vertx-lang-java:$vertxVersion")
+    testCompile("org.vert-x:vertx-lang-rhino:$vertxVersion")
+    testCompile("org.mozilla:rhino:$rhinoVersion")
+
+    testCompile("org.vert-x:vertx-testframework:$vertxVersion") {
+        transitive = false // don't need all of the other language deps
+    }
+
+    testCompile "junit:junit:$junitVersion"
+}
+
+test {
+    systemProperty 'vertx.test.timeout', 5
+    systemProperty 'vertx.mods', "$projectDir/build/tmp/mod-test"
+    // make sure the verticle isn't on the classpath
+    classpath = classpath.minus(sourceSets.main.runtimeClasspath)
+}
+
+task wrapper(type: Wrapper)
+
