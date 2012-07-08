@@ -45,7 +45,7 @@
     <copy file="mod.json" todir="${build}/${module-dir}"/>
     <copy todir="${build}/${module-dir}/lib">
       <fileset dir="${lib}">
-        <include name="mongo.jar"/>
+        <include name="*.jar"/>
       </fileset>
     </copy>
     <zip destfile="${target}/mod.zip" basedir="${build}"/>
