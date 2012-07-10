@@ -21,7 +21,7 @@ buildscript {
 	}
 	dependencies {
         classpath "org.vert-x:build-tools:$vertxBuildToolsVersion"
-        classpath "org.vert-x:gradle-plugin:$vertxBuildToolsVersion"
+        classpath "org.vert-x:gradle-plugin:$vertxGradlePluginVersion"
 	}
 }
 
@@ -61,4 +61,16 @@ dependencies {
 test {
     systemProperty 'vertx.test.timeout', 15
     systemProperty 'vertx.mods', "$projectDir/build/tmp/test-mods"
+}
+
+task collectDeps(type: Copy) {
+  destinationDir = file("build/deps")
+  into("compile") {
+    from configurations.compile
+    exclude "vertx-*.jar"
+  }
+  into("test") {
+    from configurations.testCompile
+    exclude "vertx-*.jar"
+  }
 }
