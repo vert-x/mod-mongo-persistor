@@ -3,7 +3,7 @@
 .idea
 .project
 .settings
-mod-auth-mgr.iml
+module.iml
 bin
 build
 out
