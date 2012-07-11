@@ -191,7 +191,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       });
 
       message.reply(reply, new Handler<Message<JsonObject>>() {
-        public void handle(Message msg) {
+        public void handle(Message<JsonObject> msg) {
           vertx.cancelTimer(timerID);
           // Get the next batch
           sendBatch(msg, cursor, max);
@@ -215,7 +215,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected void sendMoreExist(String status, Message<JsonObject> message, JsonObject json) {
     json.putString("status", status);
     message.reply(json, new Handler<Message<JsonObject>>() {
-      public void handle(Message msg) {
+      public void handle(Message<JsonObject> msg) {
 
       }
     });

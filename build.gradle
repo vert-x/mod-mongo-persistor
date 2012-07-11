@@ -1,0 +1,76 @@
+/*
+ * Copyright 2012 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+buildscript {
+	repositories {
+		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+		mavenCentral()
+	}
+	dependencies {
+        classpath "org.vert-x:build-tools:$vertxBuildToolsVersion"
+        classpath "org.vert-x:gradle-plugin:$vertxGradlePluginVersion"
+	}
+}
+
+apply from: 'gradle/setup.gradle'
+apply plugin: 'java'
+apply plugin: 'vertx' // configures the test classpath correctly and adds busmod packaging
+apply plugin: 'vertx-rhino'
+
+defaultTasks = ['assemble']
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+
+repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.mongodb:mongo-java-driver:$mongoVersion"
+    vertxProvided("org.vert-x:vertx-core:$vertxVersion")
+    vertxProvided("org.vert-x:vertx-platform:$vertxVersion")
+
+    testCompile("org.vert-x:vertx-core:$vertxVersion")
+    testCompile("org.vert-x:vertx-platform:$vertxVersion")
+    testCompile("org.vert-x:vertx-lang-java:$vertxVersion")
+    testCompile("org.vert-x:vertx-lang-rhino:$vertxVersion")
+    testCompile("org.mozilla:rhino:$rhinoVersion")
+
+    testCompile("org.vert-x:vertx-testframework:$vertxVersion") {
+        transitive = false // don't need all of the other language deps
+    }
+
+    testCompile "junit:junit:$junitVersion"
+}
+
+test {
+    systemProperty 'vertx.test.timeout', 15
+    systemProperty 'vertx.mods', "$projectDir/build/tmp/test-mods"
+}
+
+task collectDeps(type: Copy) {
+  destinationDir = file("build/deps")
+  into("compile") {
+    from configurations.compile
+    exclude "vertx-*.jar"
+  }
+  into("test") {
+    from configurations.testCompile
+    exclude "vertx-*.jar"
+  }
+}
