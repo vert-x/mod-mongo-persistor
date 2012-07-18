@@ -15,14 +15,14 @@
  */
 
 buildscript {
-	repositories {
-		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-		mavenCentral()
-	}
-	dependencies {
+  repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+  }
+  dependencies {
     classpath "org.vert-x:build-tools:$vertxBuildToolsVersion"
     classpath "org.vert-x:gradle-plugin:$vertxGradlePluginVersion"
-	}
+  }
 }
 
 apply from: 'gradle/setup.gradle'
