@@ -15,14 +15,14 @@
  */
 
 buildscript {
-	repositories {
-		maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-		mavenCentral()
-	}
-	dependencies {
+  repositories {
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    mavenCentral()
+  }
+  dependencies {
     classpath "org.vert-x:build-tools:$vertxBuildToolsVersion"
     classpath "org.vert-x:gradle-plugin:$vertxGradlePluginVersion"
-	}
+  }
 }
 
 apply from: 'gradle/setup.gradle'
@@ -60,8 +60,15 @@ dependencies {
 
 test {
   systemProperty 'vertx.test.timeout', 15
-  systemProperty 'vertx.mods', "$projectDir/build/tmp/test-mods"
+  systemProperty 'vertx.mods', "$projectDir/build/tmp/mod-test"
+  testLogging.showStandardStreams = true
 }
+
+task prepareVertxTest(type: Sync, dependsOn: ['prepareVertxModule']) {
+  from 'build/mod'
+  into 'build/tmp/mod-test'
+}
+test.dependsOn prepareVertxTest
 
 task collectDeps(type: Copy) {
   group = 'vert.x'
@@ -75,7 +82,7 @@ task collectDeps(type: Copy) {
   }
 }
 
-task dist(dependsOn: ['build', 'packageVertxModule']) {
+task dist(dependsOn: ['packageVertxModule']) {
   group = 'vert.x'
-  description = 'prepare a distributable busmod "mod.zip" package'
+  description = "prepare a distributable busmod 'mod.zip' package"
 }
