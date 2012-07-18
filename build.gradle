@@ -64,6 +64,8 @@ test {
 }
 
 task collectDeps(type: Copy) {
+  group = 'vert.x'
+  description = 'conveniently collect dependencies for other IDEs'
   destinationDir = file("build/deps")
   into("compile") {
     from configurations.compile
@@ -71,4 +73,9 @@ task collectDeps(type: Copy) {
   into("test") {
     from configurations.testCompile
   }
+}
+
+task dist(dependsOn: ['build', 'packageVertxModule']) {
+  group = 'vert.x'
+  description = 'prepare a distributable busmod "mod.zip" package'
 }
