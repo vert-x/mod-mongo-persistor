@@ -63,6 +63,7 @@ dependencies {
 test {
   systemProperty 'vertx.test.timeout', 15
   systemProperty 'vertx.mods', "$projectDir/build/tmp/mod-test"
+  systemProperty 'vertx.version', "$project.version"
   testLogging.showStandardStreams = true
 }
 
