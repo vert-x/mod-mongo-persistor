@@ -27,8 +27,15 @@ buildscript {
 
 apply from: 'gradle/setup.gradle'
 apply plugin: 'java'
-apply plugin: 'vertx' // configures the test classpath correctly and adds busmod packaging
-apply plugin: 'vertx-rhino'
+// apply plugin: 'vertx' // configures the test classpath correctly and adds busmod packaging
+// apply plugin: 'vertx-rhino'
+
+configurations {
+	vertxProvided {
+		visible = false
+		transitive = false
+	}
+}
 
 defaultTasks = ['assemble']
 
@@ -60,11 +67,36 @@ dependencies {
   testCompile "junit:junit:$junitVersion"
 }
 
+sourceSets.main.compileClasspath = sourceSets.main.compileClasspath.plus configurations.vertxProvided
+sourceSets.main.runtimeClasspath = sourceSets.main.runtimeClasspath.minus configurations.vertxProvided
+sourceSets.test.compileClasspath = sourceSets.test.compileClasspath.plus configurations.vertxProvided
+
 test {
   systemProperty 'vertx.test.timeout', 15
   systemProperty 'vertx.mods', "$projectDir/build/tmp/mod-test"
   systemProperty 'vertx.version', "$project.version"
   testLogging.showStandardStreams = true
+}
+
+test.classpath = test.classpath.minus sourceSets.main.runtimeClasspath
+
+task prepareVertxModule(type: Copy) {
+    description = "Assembles a vert.x module in the build/mod/${project.name.replaceFirst('mod-', '')} dir"
+    dependsOn assemble
+    destinationDir = project.file("build/mod/${project.modulename}-v${project.version}")
+
+	from(project.configurations.runtime) { into 'lib' }
+    from 'build/classes/main'
+    from 'build/resources/main'
+    from 'src/main/conf'
+}
+
+task packageVertxModule(type: Zip, dependsOn: ['prepareVertxModule']) {
+	group = 'vert.x'
+	description = "Assembles a vert.x module in 'mod.zip' format"
+	destinationDir = project.file('build/libs')
+	archiveName = 'mod.zip'
+	from project.file("build/mod")
 }
 
 task prepareVertxTest(type: Sync, dependsOn: ['prepareVertxModule']) {
