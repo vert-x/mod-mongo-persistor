@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-ext {
-  modulename='vertx.mongo-persistor'
-  version='1.0'
-  gradleVersion='1.0'
-  vertxVersion='1.2.0-SNAPSHOT'
-
-  junitVersion='4.10'
-  rhinoVersion='1.7R4'
-  mongoVersion='2.8.0'
-}
-
 apply plugin: 'java'
 
 defaultTasks = ['assemble']
