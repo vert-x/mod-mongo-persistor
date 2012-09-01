@@ -154,31 +154,24 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (collection == null) {
       return;
     }
-    JsonObject update = getMandatoryObject("update", message);
-    if (update == null) {
+    JsonObject criteriaJson = getMandatoryObject("criteria", message);
+    if (criteriaJson == null) {
       return;
     }
-    String genID = null;
-  
-    if (update.getField("_id") != null) {
-      // the id field is not an update.. doc was created.
+    DBObject criteria = jsonToDBObject(criteriaJson);
+
+    JsonObject objNewJson =  getMandatoryObject("objNew", message);
+    if (objNewJson == null) {
       return;
     }
-    
-    JsonObject query = getMandatoryObject("id", message);
-    JsonObject set = new JsonObject();
-    set.putObject("$set", update);
+    DBObject objNew = jsonToDBObject(objNewJson);
+    Boolean upsert =  message.body.getBoolean("upsert",false);
+    Boolean multi = message.body.getBoolean("multi",false);
     DBCollection coll = db.getCollection(collection);
-    
-    DBObject obj = jsonToDBObject(set);
-    
-    WriteResult res = coll.update(jsonToDBObject(query), obj);;
+
+    WriteResult res = coll.update(criteria, objNew, upsert, multi);
     if (res.getError() == null) {
       JsonObject reply = new JsonObject();
-      reply.putObject("updated", update);
-      reply.putObject("updatedid", query);
-      
-      container.getLogger().error("reply" + reply);
       sendOK(message, reply);
     } else {
       sendError(message, res.getError());
