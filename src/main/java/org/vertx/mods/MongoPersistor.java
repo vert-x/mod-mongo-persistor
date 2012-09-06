@@ -16,6 +16,7 @@
 
 package org.vertx.mods;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -154,16 +155,38 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (matcher == null) {
       return;
     }
-    JsonObject sort = message.body.getObject("sort");
+    Object sort = message.body.getField("sort");
     DBCollection coll = db.getCollection(collection);
     DBCursor cursor = coll.find(jsonToDBObject(matcher));
     if (limit != -1) {
       cursor.limit(limit);
     }
     if (sort != null) {
-      cursor.sort(jsonToDBObject(sort));
+      cursor.sort(sortObjectToDBObject(sort));
     }
     sendBatch(message, cursor, batchSize);
+  }
+
+  private DBObject sortObjectToDBObject(Object sortObj) {
+    if (sortObj instanceof JsonObject) {
+      // Backwards compatability and a simpler syntax for single-property sorting
+      return jsonToDBObject((JsonObject) sortObj);
+    } else if (sortObj instanceof JsonArray) {
+      JsonArray sortJsonObjects = (JsonArray) sortObj;
+      DBObject sortDBObject = new BasicDBObject();
+      for (Object curSortObj : sortJsonObjects) {
+        if (!(curSortObj instanceof JsonObject)) {
+          throw new IllegalArgumentException("Cannot handle type "
+              + curSortObj.getClass().getSimpleName());
+        }
+
+        sortDBObject.putAll(((JsonObject) curSortObj).toMap());
+      }
+
+      return sortDBObject;
+    } else {
+      throw new IllegalArgumentException("Cannot handle type " + sortObj.getClass().getSimpleName());
+    }
   }
 
   private void sendBatch(Message<JsonObject> message, final DBCursor cursor, final int max) {
