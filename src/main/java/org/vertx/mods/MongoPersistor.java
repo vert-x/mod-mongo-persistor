@@ -99,6 +99,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       case "delete":
         doDelete(message);
         break;
+      case "count":
+        doCount(message);
+        break;
       default:
         sendError(message, "Invalid action: " + action);
         return;
@@ -146,6 +149,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (limit == null) {
       limit = -1;
     }
+    Integer skip = (Integer)message.body.getNumber("skip");
+    if(skip == null) {
+      skip = -1;
+    }
+
     Integer batchSize = (Integer)message.body.getNumber("batch_size");
     if (batchSize == null) {
       batchSize = 100;
@@ -157,6 +165,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     JsonObject sort = message.body.getObject("sort");
     DBCollection coll = db.getCollection(collection);
     DBCursor cursor = coll.find(jsonToDBObject(matcher));
+    if(skip != -1) {
+        cursor.skip(skip);
+    }
     if (limit != -1) {
       cursor.limit(limit);
     }
@@ -242,6 +253,24 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     sendOK(message, reply);
   }
+
+    private void doCount(Message<JsonObject> message) {
+        String collection = getMandatoryString("collection", message);
+        if (collection == null) {
+            return;
+        }
+        JsonObject matcher = message.body.getObject("matcher");
+        DBCollection coll = db.getCollection(collection);
+        long count;
+        if (matcher == null) {
+            count = coll.count();
+        } else {
+            count = coll.count(jsonToDBObject(matcher));
+        }
+        JsonObject reply = new JsonObject();
+        reply.putNumber("count", count);
+        sendOK(message, reply);
+    }
 
   private void doDelete(Message<JsonObject> message) {
     String collection = getMandatoryString("collection", message);
