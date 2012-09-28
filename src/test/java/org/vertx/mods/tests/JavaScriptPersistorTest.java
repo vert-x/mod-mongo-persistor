@@ -63,6 +63,11 @@ public class JavaScriptPersistorTest extends TestBase {
   }
 
   @Test
+  public void testFindWithSkipAndLimit() throws Exception {
+      startTest(getMethodName());
+  }
+
+  @Test
   public void testFindWithSort() throws Exception {
     startTest(getMethodName());
   }
@@ -72,6 +77,10 @@ public class JavaScriptPersistorTest extends TestBase {
     startTest(getMethodName());
   }
 
+  @Test
+  public void testCount() throws Exception {
+     startTest(getMethodName());
+  }
 
 }
 
