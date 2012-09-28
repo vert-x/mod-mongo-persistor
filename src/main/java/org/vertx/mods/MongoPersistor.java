@@ -17,6 +17,7 @@
 package org.vertx.mods;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -91,6 +92,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       case "save":
         doSave(message);
         break;
+      case "update":
+        doUpdate(message);
+        break;    
       case "find":
         doFind(message);
         break;
@@ -103,6 +107,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       case "count":
         doCount(message);
         break;
+      case "getCollections":
+        getCollections(message);
+        break;
+      case "collectionStats":
+        getCollectionStats(message);
+        break;
+      case "command":
+        runCommand(message);
       default:
         sendError(message, "Invalid action: " + action);
         return;
@@ -136,6 +148,35 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       } else {
         sendOK(message);
       }
+    } else {
+      sendError(message, res.getError());
+    }
+  }
+
+  private void doUpdate(Message<JsonObject> message) {
+    String collection = getMandatoryString("collection", message);
+    if (collection == null) {
+      return;
+    }
+    JsonObject criteriaJson = getMandatoryObject("criteria", message);
+    if (criteriaJson == null) {
+      return;
+    }
+    DBObject criteria = jsonToDBObject(criteriaJson);
+
+    JsonObject objNewJson =  getMandatoryObject("objNew", message);
+    if (objNewJson == null) {
+      return;
+    }
+    DBObject objNew = jsonToDBObject(objNewJson);
+    Boolean upsert =  message.body.getBoolean("upsert",false);
+    Boolean multi = message.body.getBoolean("multi",false);
+    DBCollection coll = db.getCollection(collection);
+
+    WriteResult res = coll.update(criteria, objNew, upsert, multi);
+    if (res.getError() == null) {
+      JsonObject reply = new JsonObject();
+      sendOK(message, reply);
     } else {
       sendError(message, res.getError());
     }
@@ -309,6 +350,44 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     WriteResult res = coll.remove(obj);
     int deleted = res.getN();
     JsonObject reply = new JsonObject().putNumber("number", deleted);
+    sendOK(message, reply);
+  }
+
+  private void getCollections(Message<JsonObject> message) {
+    JsonObject reply = new JsonObject();
+    reply.putArray("collections", new JsonArray(db.getCollectionNames()
+        .toArray()));
+    sendOK(message, reply);
+  }
+
+  private void getCollectionStats(Message<JsonObject> message) {
+    String collection = getMandatoryString("collection", message);
+
+    if (collection == null) {
+      return;
+    }
+    
+    DBCollection coll = db.getCollection(collection);
+    CommandResult stats = coll.getStats();
+    
+    JsonObject reply = new JsonObject();
+    reply.putObject("stats", new JsonObject(stats.toString()));
+    sendOK(message, reply);
+
+  }
+
+  private void runCommand(Message<JsonObject> message) {
+    JsonObject reply = new JsonObject();
+    
+    String command = getMandatoryString("command", message);
+
+    if (command == null) {
+      return;
+    }
+    
+    CommandResult result = db.command(command);
+    
+    reply.putObject("result", new JsonObject(result.toString()));
     sendOK(message, reply);
   }
 

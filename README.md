@@ -97,7 +97,53 @@ If an error occurs in saving the document a reply is returned:
     
 Where `message` is an error message.    
 
-            
+   
+### Update
+
+Updates a document in the database.
+Uses the Mongodb update function: http://www.mongodb.org/display/DOCS/Updating
+
+To update a document send a JSON message to the module main address:
+
+    {
+        "action": "update",
+        "collection": <collection>,
+        "criteria": {
+            <criteria>
+        },
+        "objNew" : {
+            <objNew>
+        },
+        upsert : <upsert>
+        multi: <multi>
+    }  
+
+Where:
+ * `collection` is the name of the MongoDB collection that you wish to save the document in. This field is mandatory.
+
+
+An example would be:
+
+    {
+        "action": "update",
+        "collection": "users",
+        "criteria": {
+            "_id": "tim",
+        },
+        objNew : {
+            $inc: {
+                age: 30
+            }
+         },
+        upsert : true,
+        multi : false
+    }
+
+
+
+
+
+
 ### Find
 
 Finds matching documents in the database.
