@@ -247,6 +247,56 @@ function testFindWithSort() {
   });
 }
 
+function testFindWithKeys() {
+	
+    eb.send('test.persistor', {
+      collection: 'testcoll',
+      action: 'save',
+      document: {
+        name: 'tim',
+        age: Math.floor(Math.random()*11)
+      }
+    }, function(reply) {
+      tu.azzert(reply.status === 'ok');
+    });
+  
+
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'findone',
+    // matcher: {name: 'tim'},
+    keys: { name: 1},
+    sort: {age: 1}
+  }, function(reply) {
+    tu.azzert(reply.status === 'ok');
+    tu.azzert(!reply.result.age);
+  });
+
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'findone',
+    matcher: {name: 'tim'},
+    keys: { name: 1},
+    sort: {age: 1}
+  }, function(reply) {
+    tu.azzert(reply.status === 'ok');
+    tu.azzert(!reply.result.age);
+  });
+
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'find',
+    matcher: {name: 'tim'},
+    keys: { name: 1},
+    sort: {age: 1}
+  }, function(reply) {
+    tu.azzert(reply.status === 'ok');
+    tu.azzert(!reply.results[0].age);
+    tu.testComplete();
+  });
+}
+
+
 function testFindBatched() {
 
   var num = 103;
