@@ -71,6 +71,11 @@ public class JavaScriptPersistorTest extends TestBase {
   public void testFindWithSort() throws Exception {
     startTest(getMethodName());
   }
+  
+  @Test
+  public void testFindWithKeys() throws Exception {
+    startTest(getMethodName());
+  }
 
   @Test
   public void testFindBatched() throws Exception {

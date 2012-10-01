@@ -204,9 +204,13 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (matcher == null) {
       return;
     }
+    JsonObject keys = message.body.getObject("keys");
+    
     Object sort = message.body.getField("sort");
     DBCollection coll = db.getCollection(collection);
-    DBCursor cursor = coll.find(jsonToDBObject(matcher));
+    DBCursor cursor = (keys == null) ? 
+    			coll.find(jsonToDBObject(matcher)) : 
+    			coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
     if(skip != -1) {
         cursor.skip(skip);
     }
@@ -302,12 +306,13 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
     JsonObject matcher = message.body.getObject("matcher");
+    JsonObject keys = message.body.getObject("keys");
     DBCollection coll = db.getCollection(collection);
     DBObject res;
     if (matcher == null) {
-      res = coll.findOne();
+      res = keys != null ? coll.findOne(null, jsonToDBObject(keys)) : coll.findOne();
     } else {
-      res = coll.findOne(jsonToDBObject(matcher));
+      res = keys != null ? coll.findOne(jsonToDBObject(matcher), jsonToDBObject(keys)) : coll.findOne(jsonToDBObject(matcher));
     }
     JsonObject reply = new JsonObject();
     if (res != null) {
