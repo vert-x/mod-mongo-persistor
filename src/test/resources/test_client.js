@@ -59,18 +59,43 @@ function testSave() {
     }, function(reply) {
       tu.azzert(reply.status === 'ok');
 
-       eb.send('test.persistor', {
+      eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'findone',
+        document: {
+          _id: id
+        }
+      }, function(reply) {
+        tu.azzert(reply.status === 'ok');
+        tu.azzert(reply.result.name === 'tim');
+        tu.azzert(reply.result.age === 1000);
+
+        // Do an update with a different WriteConcern
+        eb.send('test.persistor', {
           collection: 'testcoll',
-          action: 'findone',
+          action: 'save',
+          writeConcern: "SAFE",
           document: {
-            _id: id
+            _id: id,
+            name: 'fox',
+            age: 21
           }
         }, function(reply) {
           tu.azzert(reply.status === 'ok');
-          tu.azzert(reply.result.name === 'tim');
-          tu.azzert(reply.result.age === 1000);
+          eb.send('test.persistor', {
+            collection: 'testcoll',
+            action: 'findone',
+            document: {
+              _id: id
+            }
+          }, function(reply) {
+            tu.azzert(reply.status === 'ok');
+            tu.azzert(reply.result.name === 'fox');
+            tu.azzert(reply.result.age === 21);
+          });
           tu.testComplete();
-       });
+        });
+      });
     });
   });
 }
@@ -359,7 +384,28 @@ function testDelete() {
   }, function(reply) {
     tu.azzert(reply.status === 'ok');
   });
-
+  // Testing insert with writeConcern
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'save',
+    writeConcert: "JOURNAL_SAFE",
+    document: {
+      name: 'mark'
+    }
+  }, function(reply) {
+    tu.azzert(reply.status === 'ok');
+  });
+  // Testing delete with writeConcern
+  eb.send('test.persistor', {
+     collection: 'testcoll',
+     action: 'delete',
+     writeConcern: "NORMAL",
+     matcher: {
+       name: 'mark'
+     }
+  }, function(reply) {
+     tu.azzert(reply.status === 'ok');
+  });
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'delete',

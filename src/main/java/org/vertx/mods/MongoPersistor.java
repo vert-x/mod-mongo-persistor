@@ -23,6 +23,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import com.mongodb.util.JSON;
 import org.vertx.java.busmods.BusModBase;
@@ -139,7 +140,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(doc);
-    WriteResult res = coll.save(obj);
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    if (writeConcern == null) {
+      writeConcern = db.getWriteConcern();
+    }
+    WriteResult res = coll.save(obj, writeConcern);
     if (res.getError() == null) {
       if (genID != null) {
         JsonObject reply = new JsonObject();
@@ -172,10 +177,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     Boolean upsert =  message.body.getBoolean("upsert",false);
     Boolean multi = message.body.getBoolean("multi",false);
     DBCollection coll = db.getCollection(collection);
-
-    WriteResult res = coll.update(criteria, objNew, upsert, multi);
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    if (writeConcern == null) {
+        writeConcern = db.getWriteConcern();
+    }
+    WriteResult res = coll.update(criteria, objNew, upsert, multi, writeConcern);
     if (res.getError() == null) {
       JsonObject reply = new JsonObject();
+      reply.putNumber("number", res.getN());
       sendOK(message, reply);
     } else {
       sendError(message, res.getError());
@@ -352,7 +361,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(matcher);
-    WriteResult res = coll.remove(obj);
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    if (writeConcern == null) {
+      writeConcern = db.getWriteConcern();
+    }
+    WriteResult res = coll.remove(obj, writeConcern);
     int deleted = res.getN();
     JsonObject reply = new JsonObject().putNumber("number", deleted);
     sendOK(message, reply);
