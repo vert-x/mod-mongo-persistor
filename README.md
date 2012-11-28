@@ -387,4 +387,32 @@ If an error occurs in finding the documents a reply is returned:
         "message": <message>
     }
     
-Where `message` is an error message. 
+Where `message` is an error message.
+
+### writeConcern
+save, update and delete operations have an optional field called "writeConcern". Setting this property in your request
+change the "consistency" or that operation.
+
+This allows each call/use case to overwrite the db's default WriteConcern setting.
+
+Since certain use cases might need more or less consistency than the databases default setting.
+
+By default MongoDB sets the database to the least restrictive async call and forget WriteConcern, which can lead to data loss.
+
+By being able to set it to a higher setting you can get to your eventual consistency.
+
+The property is "writeConcern" and can be set to any of the constant names in the Java MongoDB Driver WriteConcern class as a String.
+
+WriteConcern has a valueOf method that takes that String and converts it to a fully configured WriteConcern class.
+
+Valid values are
+"NONE", "NORMAL", "SAFE", "MAJORITY", "FSYNC_SAFE", "JOURNAL_SAFE" and "REPLICAS_SAFE"
+
+An example for delete would be
+
+    {
+        "action": "delete",
+        "collection": <collection>,
+        "matcher": <matcher>,
+        "writeConcert": "SAFE"
+    }
