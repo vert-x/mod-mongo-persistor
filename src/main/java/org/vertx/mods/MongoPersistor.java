@@ -116,6 +116,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         break;
       case "command":
         runCommand(message);
+        break;
       default:
         sendError(message, "Invalid action: " + action);
         return;
