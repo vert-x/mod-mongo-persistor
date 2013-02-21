@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-load('test_utils.js')
-load('vertx.js')
-
-var tu = new TestUtils();
+load("vertx.js");
+load("vertx_tests.js");
 
 var eb = vertx.eventBus;
+
+var persistorConfig = {address: 'test.persistor', db_name: 'test_db'}
+var script = this;
+vertx.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function() {
+  deleteAll();
+  initTests(script);
+});
 
 function deleteAll() {
   eb.send('test.persistor', {
@@ -27,7 +32,7 @@ function deleteAll() {
     action: 'delete',
     matcher: {}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
 }
 
@@ -43,9 +48,9 @@ function testSave() {
       cheeses: ['brie', 'stilton']
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
     var id  = reply._id;
-    tu.azzert(id != undefined);
+    vassert.assertTrue(id != undefined);
 
     // Now update it
     eb.send('test.persistor', {
@@ -57,7 +62,7 @@ function testSave() {
         age: 1000
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
 
       eb.send('test.persistor', {
         collection: 'testcoll',
@@ -66,9 +71,9 @@ function testSave() {
           _id: id
         }
       }, function(reply) {
-        tu.azzert(reply.status === 'ok');
-        tu.azzert(reply.result.name === 'tim');
-        tu.azzert(reply.result.age === 1000);
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertEquals('tim', reply.result.name);
+        vassert.assertEquals(1000, reply.result.age, 0);
 
         // Do an update with a different WriteConcern
         eb.send('test.persistor', {
@@ -81,7 +86,7 @@ function testSave() {
             age: 21
           }
         }, function(reply) {
-          tu.azzert(reply.status === 'ok');
+          vassert.assertEquals('ok', reply.status);
           eb.send('test.persistor', {
             collection: 'testcoll',
             action: 'findone',
@@ -89,11 +94,11 @@ function testSave() {
               _id: id
             }
           }, function(reply) {
-            tu.azzert(reply.status === 'ok');
-            tu.azzert(reply.result.name === 'fox');
-            tu.azzert(reply.result.age === 21);
+            vassert.assertEquals('ok', reply.status);
+            vassert.assertEquals('fox', reply.result.name);
+            vassert.assertEquals(21, reply.result.age, 0);
           });
-          tu.testComplete();
+          vassert.testComplete();
         });
       });
     });
@@ -113,7 +118,7 @@ function testFind() {
       cheeses: ['brie', 'stilton']
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
 
   eb.send('test.persistor', {
@@ -123,18 +128,18 @@ function testFind() {
       name: 'tim'
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.results.length === 1);
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(1, reply.results.length, 0);
     var res = reply.results[0];
-    tu.azzert(res.name === 'tim');
-    tu.azzert(res.age === 40);
-    tu.azzert(res.pi === 3.14159);
-    tu.azzert(res.male === true);
-    tu.azzert(res.cheeses.length === 2);
-    tu.azzert(res.cheeses[0] === 'brie');
-    tu.azzert(res.cheeses[1] === 'stilton');
-    tu.azzert(res._id != undefined);
-    tu.testComplete();
+    vassert.assertEquals('tim', res.name);
+    vassert.assertEquals(40, res.age, 0);
+    vassert.assertEquals(3.14159, res.pi, 0);
+    vassert.assertTrue(res.male);
+    vassert.assertEquals(2, res.cheeses.length, 0);
+    vassert.assertEquals('brie', res.cheeses[0]);
+    vassert.assertEquals('stilton', res.cheeses[1]);
+    vassert.assertTrue(undefined != res._id);
+    vassert.testComplete();
   });
 }
 
@@ -151,7 +156,7 @@ function testFindOne() {
       cheeses: ['brie', 'stilton']
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
 
   eb.send('test.persistor', {
@@ -161,17 +166,17 @@ function testFindOne() {
       name: 'tim'
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
     var res = reply.result;
-    tu.azzert(res.name === 'tim');
-    tu.azzert(res.age === 40);
-    tu.azzert(res.pi === 3.14159);
-    tu.azzert(res.male === true);
-    tu.azzert(res.cheeses.length === 2);
-    tu.azzert(res.cheeses[0] === 'brie');
-    tu.azzert(res.cheeses[1] === 'stilton');
-    tu.azzert(res._id != undefined);
-    tu.testComplete();
+    vassert.assertEquals('tim', res.name);
+    vassert.assertEquals(40, res.age, 0);
+    vassert.assertEquals(3.14159, res.pi, 0);
+    vassert.assertTrue(res.male);
+    vassert.assertEquals(2, res.cheeses.length, 0);
+    vassert.assertEquals('brie', res.cheeses[0]);
+    vassert.assertEquals('stilton', res.cheeses[1]);
+    vassert.assertTrue(undefined != res._id);
+    vassert.testComplete();
   });
 }
 
@@ -189,7 +194,7 @@ function testFindWithLimit() {
         name: 'tim' + i
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 
@@ -199,9 +204,9 @@ function testFindWithLimit() {
     limit: limit,
     matcher: {}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.results.length === limit);
-    tu.testComplete();
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(limit, reply.results.length, 0);
+    vassert.testComplete();
   });
 }
 
@@ -220,7 +225,7 @@ function testFindWithSkipAndLimit() {
         name: 'tim' + i
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 
@@ -231,9 +236,9 @@ function testFindWithSkipAndLimit() {
     limit: limit,
     matcher: {}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.results.length === 10);
-    tu.testComplete();
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(10, reply.results.length, 0);
+    vassert.testComplete();
   });
 }
 
@@ -250,7 +255,7 @@ function testFindWithSort() {
         age: Math.floor(Math.random()*11)
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 
@@ -260,15 +265,15 @@ function testFindWithSort() {
     matcher: {},
     sort: {age: 1}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.results.length === num);
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(num, reply.results.length, 0);
     var last = 0;
     for (var i = 0; i < reply.results.length; i++) {
       var age = reply.results[i].age;
-      tu.azzert(age >= last);
+      vassert.assertTrue(age >= last);
       last = age;
     }
-    tu.testComplete();
+    vassert.testComplete();
   });
 }
 
@@ -282,19 +287,18 @@ function testFindWithKeys() {
         age: Math.floor(Math.random()*11)
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   
 
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'findone',
-    // matcher: {name: 'tim'},
     keys: { name: 1},
     sort: {age: 1}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(!reply.result.age);
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertTrue(!reply.result.age);
   });
 
   eb.send('test.persistor', {
@@ -304,8 +308,8 @@ function testFindWithKeys() {
     keys: { name: 1},
     sort: {age: 1}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(!reply.result.age);
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertTrue(!reply.result.age);
   });
 
   eb.send('test.persistor', {
@@ -315,9 +319,9 @@ function testFindWithKeys() {
     keys: { name: 1},
     sort: {age: 1}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(!reply.results[0].age);
-    tu.testComplete();
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertTrue(!reply.results.age);
+    vassert.testComplete();
   });
 }
 
@@ -335,7 +339,7 @@ function testFindBatched() {
         age: i
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 
@@ -345,13 +349,13 @@ function testFindBatched() {
     return function(reply, replier) {
       received += reply.results.length;
       if (received < num) {
-        tu.azzert(reply.results.length === 10);
-        tu.azzert(reply.status === 'more-exist');
+        vassert.assertEquals(10, reply.results.length, 0);
+        vassert.assertEquals('more-exist', reply.status);
         replier({}, createReplyHandler());
       } else {
-        tu.azzert(reply.results.length === 3);
-        tu.azzert(reply.status === 'ok');
-        tu.testComplete();
+        vassert.assertEquals(3, reply.results.length, 0);
+        vassert.assertEquals('ok', reply.status);
+        vassert.testComplete();
       }
     }
   }
@@ -373,7 +377,7 @@ function testDelete() {
       name: 'tim'
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -382,7 +386,7 @@ function testDelete() {
       name: 'bob'
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
   // Testing insert with writeConcern
   eb.send('test.persistor', {
@@ -393,7 +397,7 @@ function testDelete() {
       name: 'mark'
     }
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
   // Testing delete with writeConcern
   eb.send('test.persistor', {
@@ -404,7 +408,7 @@ function testDelete() {
        name: 'mark'
      }
   }, function(reply) {
-     tu.azzert(reply.status === 'ok');
+    vassert.assertEquals('ok', reply.status);
   });
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -414,8 +418,8 @@ function testDelete() {
     }
   }, function(reply) {
 
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.number === 1);
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(1, reply.number, 0);
 
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -424,10 +428,9 @@ function testDelete() {
         name: 'bob'
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
-      tu.azzert(reply.results.length === 1);
-
-      tu.testComplete();
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(1, reply.results.length, 0);
+      vassert.testComplete();
     });
   });
 }
@@ -445,7 +448,7 @@ function testCount() {
         age: Math.floor(Math.random()*11)
       }
     }, function(reply) {
-      tu.azzert(reply.status === 'ok');
+      vassert.assertEquals('ok', reply.status);
     });
   }
 
@@ -454,20 +457,10 @@ function testCount() {
     action: 'count',
     matcher: {}
   }, function(reply) {
-    tu.azzert(reply.status === 'ok');
-    tu.azzert(reply.count === num);
-    tu.testComplete();
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(num, reply.count, 0);
+    vassert.testComplete();
   });
 }
 
-tu.registerTests(this);
-var persistorConfig = {address: 'test.persistor', db_name: 'test_db'}
-vertx.deployModule('vertx.mongo-persistor-v' + java.lang.System.getProperty('vertx.version'), persistorConfig, 1, function() {
-  deleteAll();
-  tu.appReady();
-});
-
-function vertxStop() {
-  tu.unregisterAll();
-  tu.appStopped();
-}
+initTests(this);
