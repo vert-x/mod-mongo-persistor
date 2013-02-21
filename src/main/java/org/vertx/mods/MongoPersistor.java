@@ -16,15 +16,8 @@
 
 package org.vertx.mods;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import com.foursquare.fongo.Fongo;
+import com.mongodb.*;
 import com.mongodb.util.JSON;
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
@@ -44,15 +37,15 @@ import java.util.UUID;
  */
 public class MongoPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 
-  private String address;
-  private String host;
-  private int port;
-  private String dbName;
-  private String username;
-  private String password;
+  protected String address;
+  protected String host;
+  protected int port;
+  protected String dbName;
+  protected String username;
+  protected String password;
 
-  private Mongo mongo;
-  private DB db;
+  protected Mongo mongo;
+  protected DB db;
 
   public void start() {
     super.start();
@@ -63,17 +56,25 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     dbName = getOptionalStringConfig("db_name", "default_db");
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
+    boolean fake = getOptionalBooleanConfig("fake", false);
 
-    try {
-      mongo = new Mongo(host, port);
-      db = mongo.getDB(dbName);
-      if (username != null && password != null) {
-        db.authenticate(username, password.toCharArray());
+    if (fake) {
+      Fongo fongo = new Fongo("fongo server");
+      db = fongo.getDB(dbName);
+      mongo = fongo.getMongo();
+    } else {
+      try {
+        mongo = new Mongo(host, port);
+        db = mongo.getDB(dbName);
+        if (username != null && password != null) {
+          db.authenticate(username, password.toCharArray());
+        }
+      } catch (UnknownHostException e) {
+        logger.error("Failed to connect to mongo server", e);
       }
-      eb.registerHandler(address, this);
-    } catch (UnknownHostException e) {
-      logger.error("Failed to connect to mongo server", e);
     }
+
+    eb.registerHandler(address, this);
   }
 
   public void stop() {

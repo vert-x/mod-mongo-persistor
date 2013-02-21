@@ -20,7 +20,8 @@ The mongo-persistor module takes the following configuration:
         "address": <address>,
         "host": <host>,
         "port": <port>,
-        "db_name": <db_name>    
+        "db_name": <db_name>,
+        "fake": <fake>
     }
     
 For example:
@@ -38,6 +39,7 @@ Let's take a look at each field in turn:
 * `host` Host name or ip address of the MongoDB instance. Defaults to `localhost`.
 * `port` Port at which the MongoDB instance is listening. Defaults to `27017`.
 * `db_name` Name of the database in the MongoDB instance to use. Defaults to `default_db`.
+* `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
 
 ## Operations
 

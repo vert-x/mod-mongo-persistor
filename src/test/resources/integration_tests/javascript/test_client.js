@@ -19,7 +19,7 @@ load("vertx_tests.js");
 
 var eb = vertx.eventBus;
 
-var persistorConfig = {address: 'test.persistor', db_name: 'test_db'}
+var persistorConfig = {address: 'test.persistor', db_name: 'test_db', fake: true}
 var script = this;
 vertx.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function() {
   deleteAll();
@@ -298,7 +298,7 @@ function testFindWithKeys() {
     sort: {age: 1}
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(!reply.result.age);
+    vassert.assertEquals('tim', reply.result.name);
   });
 
   eb.send('test.persistor', {
@@ -309,7 +309,7 @@ function testFindWithKeys() {
     sort: {age: 1}
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(!reply.result.age);
+    vassert.assertEquals('tim', reply.result.name);
   });
 
   eb.send('test.persistor', {
@@ -320,7 +320,7 @@ function testFindWithKeys() {
     sort: {age: 1}
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-    vassert.assertTrue(!reply.results.age);
+    vassert.assertEquals('tim', reply.results[0].name);
     vassert.testComplete();
   });
 }
