@@ -7,4 +7,4 @@ module.iml
 bin
 build
 out
-mods
+/mods
