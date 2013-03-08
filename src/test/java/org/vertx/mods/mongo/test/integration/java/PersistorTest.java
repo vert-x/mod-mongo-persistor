@@ -58,8 +58,6 @@ public class PersistorTest extends TestVerticle {
   @Test
   public void testPersistor() throws Exception {
 
-    System.out.println("in testPersistor");
-
     //First delete everything
     JsonObject json = new JsonObject().putString("collection", "testcoll")
         .putString("action", "delete").putObject("matcher", new JsonObject());
@@ -94,7 +92,6 @@ public class PersistorTest extends TestVerticle {
       }
     });
 
-    System.out.println("test complete!!");
 
   }
 
