@@ -29,9 +29,9 @@ For example:
     {
         "address": "test.my_persistor",
         "host": "192.168.1.100",
-        "port": 27000
+        "port": 27000,
         "db_name": "my_db"
-    }        
+    }
     
 Let's take a look at each field in turn:
 
@@ -156,15 +156,17 @@ To find documents send a JSON message to the module main address:
         "action": "find",
         "collection": <collection>,
         "matcher": <matcher>,
+        "sort": <sort_query>
         "keys": <keys>,
         "skip": <offset>,
         "limit": <limit>,
         "batch_size": <batch_size>
-    }     
+    }
     
 Where:
 * `collection` is the name of the MongoDB collection that you wish to search in in. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to find matching documents. This obeys the normal MongoDB matching rues.
+* `sort_query` provides an order for sorting the responses that you are returned.
 * `keys` is an optional JSON object that contains the fields that should be returned for matched documents. See MongoDB manual for more information. Example: { "name": 1 } will only return objects with _id and the name field
 * `skip` is a number which determines the number of documents to skip. This is optional. By default no documents are skipped.
 * `limit` is a number which determines the maximum total number of documents to return. This is optional. By default all documents are returned.
