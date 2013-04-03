@@ -1,3 +1,4 @@
+apply from: "gradle/setup.gradle"
 apply from: "gradle/vertx.gradle"
 
 /*
