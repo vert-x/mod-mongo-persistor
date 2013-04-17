@@ -21,9 +21,13 @@ var eb = vertx.eventBus;
 
 var persistorConfig = {address: 'test.persistor', db_name: 'test_db', fake: true}
 var script = this;
-vertx.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function() {
-  deleteAll();
-  initTests(script);
+vertx.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function(err, deployID) {
+  if (err != null) {
+    err.printStackTrace();
+  } else {
+    deleteAll();
+    initTests(script);
+  }
 });
 
 function deleteAll() {

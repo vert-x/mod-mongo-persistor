@@ -18,6 +18,8 @@ package org.vertx.mods.mongo.test.integration.java;
  */
 
 import org.junit.Test;
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -48,9 +50,13 @@ public class PersistorTest extends TestVerticle {
     config.putString("address", "test.persistor");
     config.putString("db_name", "test_db");
     config.putBoolean("fake", true);
-    container.deployModule(System.getProperty("vertx.modulename"), config, 1, new Handler<String>() {
-      public void handle(String depID) {
-        PersistorTest.super.start();
+    container.deployModule(System.getProperty("vertx.modulename"), config, 1, new AsyncResultHandler<String>() {
+      public void handle(AsyncResult<String> ar) {
+        if (ar.succeeded()) {
+          PersistorTest.super.start();
+        } else {
+          ar.cause().printStackTrace();
+        }
       }
     });
   }
@@ -64,7 +70,7 @@ public class PersistorTest extends TestVerticle {
 
     eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
-        assertEquals("ok", reply.body.getString("status"));
+        assertEquals("ok", reply.body().getString("status"));
       }
     });
 
@@ -74,7 +80,7 @@ public class PersistorTest extends TestVerticle {
       json = new JsonObject().putString("collection", "testcoll").putString("action", "save").putObject("document", doc);
       eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
         public void handle(Message<JsonObject> reply) {
-          assertEquals("ok", reply.body.getString("status"));
+          assertEquals("ok", reply.body().getString("status"));
         }
       });
     }
@@ -85,8 +91,8 @@ public class PersistorTest extends TestVerticle {
 
     eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
-        assertEquals("ok", reply.body.getString("status"));
-        JsonArray results = reply.body.getArray("results");
+        assertEquals("ok", reply.body().getString("status"));
+        JsonArray results = reply.body().getArray("results");
         assertEquals(numDocs, results.size());
         testComplete();
       }

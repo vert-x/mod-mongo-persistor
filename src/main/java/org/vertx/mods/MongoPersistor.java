@@ -83,7 +83,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   public void handle(Message<JsonObject> message) {
 
-    String action = message.body.getString("action");
+    String action = message.body().getString("action");
 
     if (action == null) {
       sendError(message, "action must be specified");
@@ -176,8 +176,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
     DBObject objNew = jsonToDBObject(objNewJson);
-    Boolean upsert =  message.body.getBoolean("upsert",false);
-    Boolean multi = message.body.getBoolean("multi",false);
+    Boolean upsert =  message.body().getBoolean("upsert",false);
+    Boolean multi = message.body().getBoolean("multi",false);
     DBCollection coll = db.getCollection(collection);
     WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
     if (writeConcern == null) {
@@ -198,16 +198,16 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (collection == null) {
       return;
     }
-    Integer limit = (Integer)message.body.getNumber("limit");
+    Integer limit = (Integer)message.body().getNumber("limit");
     if (limit == null) {
       limit = -1;
     }
-    Integer skip = (Integer)message.body.getNumber("skip");
+    Integer skip = (Integer)message.body().getNumber("skip");
     if(skip == null) {
       skip = -1;
     }
 
-    Integer batchSize = (Integer)message.body.getNumber("batch_size");
+    Integer batchSize = (Integer)message.body().getNumber("batch_size");
     if (batchSize == null) {
       batchSize = 100;
     }
@@ -215,9 +215,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (matcher == null) {
       return;
     }
-    JsonObject keys = message.body.getObject("keys");
+    JsonObject keys = message.body().getObject("keys");
     
-    Object sort = message.body.getField("sort");
+    Object sort = message.body().getField("sort");
     DBCollection coll = db.getCollection(collection);
     DBCursor cursor = (keys == null) ? 
     			coll.find(jsonToDBObject(matcher)) : 
@@ -272,13 +272,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       // Set a timeout, if the user doesn't reply within 10 secs, close the cursor
       final long timerID = vertx.setTimer(10000, new Handler<Long>() {
         public void handle(Long timerID) {
-          container.getLogger().warn("Closing DB cursor on timeout");
+          container.logger().warn("Closing DB cursor on timeout");
           try {
             cursor.close();
           } catch (Exception ignore) {
           }
         }
       });
+
 
       message.reply(reply, new Handler<Message<JsonObject>>() {
         public void handle(Message<JsonObject> msg) {
@@ -317,8 +318,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (collection == null) {
       return;
     }
-    JsonObject matcher = message.body.getObject("matcher");
-    JsonObject keys = message.body.getObject("keys");
+    JsonObject matcher = message.body().getObject("matcher");
+    JsonObject keys = message.body().getObject("keys");
     DBCollection coll = db.getCollection(collection);
     DBObject res;
     if (matcher == null) {
@@ -340,7 +341,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         if (collection == null) {
             return;
         }
-        JsonObject matcher = message.body.getObject("matcher");
+        JsonObject matcher = message.body().getObject("matcher");
         DBCollection coll = db.getCollection(collection);
         long count;
         if (matcher == null) {
