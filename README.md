@@ -156,7 +156,7 @@ To find documents send a JSON message to the module main address:
         "action": "find",
         "collection": <collection>,
         "matcher": <matcher>,
-        "sort": <sort_query>
+        "sort": <sort_query>,
         "keys": <keys>,
         "skip": <offset>,
         "limit": <limit>,
