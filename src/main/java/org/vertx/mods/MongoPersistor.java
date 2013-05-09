@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * MongoDB Persistor Bus Module<p>
- * Please see the busmods manual for a full description<p>
+ * Please see the README.md for a full descrition<p>
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  * @author Thomas Risberg
@@ -46,6 +46,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   protected Mongo mongo;
   protected DB db;
+  protected Fongo fongo;
 
   public void start() {
     super.start();
@@ -57,14 +58,18 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
     boolean fake = getOptionalBooleanConfig("fake", false);
+    int poolSize = getOptionalIntConfig("pool_size", 10);
 
     if (fake) {
-      Fongo fongo = new Fongo("fongo server");
+      fongo = new Fongo("fongo server");
       db = fongo.getDB(dbName);
       mongo = fongo.getMongo();
     } else {
       try {
-        mongo = new Mongo(host, port);
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.connectionsPerHost(poolSize);
+        ServerAddress address = new ServerAddress(host, port);
+        mongo = new MongoClient(address, builder.build());
         db = mongo.getDB(dbName);
         if (username != null && password != null) {
           db.authenticate(username, password.toCharArray());
@@ -142,7 +147,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(doc);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
@@ -179,9 +184,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     Boolean upsert =  message.body().getBoolean("upsert",false);
     Boolean multi = message.body().getBoolean("multi",false);
     DBCollection coll = db.getCollection(collection);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
     if (writeConcern == null) {
-        writeConcern = db.getWriteConcern();
+      writeConcern = db.getWriteConcern();
     }
     WriteResult res = coll.update(criteria, objNew, upsert, multi, writeConcern);
     if (res.getError() == null) {
@@ -365,7 +370,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(matcher);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }

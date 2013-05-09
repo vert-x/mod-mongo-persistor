@@ -1,4 +1,5 @@
 {
   "main": "org.vertx.mods.MongoPersistor",
-  "worker": true
+  "worker": true,
+  "multi-threaded": true
 }

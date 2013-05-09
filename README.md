@@ -2,7 +2,7 @@
 
 This module allows data to be saved, retrieved, searched for, and deleted in a MongoDB instance. MongoDB is a great match for persisting vert.x data since it natively handles JSON (BSON) documents. To use this module you must have a MongoDB instance running on your network.
 
-This is a worker module and must be started as a worker verticle.
+This is a multi-threaded worker module.
 
 ## Dependencies
 
@@ -21,6 +21,7 @@ The mongo-persistor module takes the following configuration:
         "host": <host>,
         "port": <port>,
         "db_name": <db_name>,
+        "pool_size": <pool_size>,
         "fake": <fake>
     }
     
@@ -30,6 +31,7 @@ For example:
         "address": "test.my_persistor",
         "host": "192.168.1.100",
         "port": 27000,
+        "pool_size": 20,
         "db_name": "my_db"
     }
     
@@ -39,6 +41,7 @@ Let's take a look at each field in turn:
 * `host` Host name or ip address of the MongoDB instance. Defaults to `localhost`.
 * `port` Port at which the MongoDB instance is listening. Defaults to `27017`.
 * `db_name` Name of the database in the MongoDB instance to use. Defaults to `default_db`.
+* `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
 
 ## Operations
@@ -394,18 +397,19 @@ If an error occurs in finding the documents a reply is returned:
 Where `message` is an error message.
 
 ### writeConcern
-save, update and delete operations have an optional field called "writeConcern". Setting this property in your request
-change the "consistency" or that operation.
 
-This allows each call/use case to overwrite the db's default WriteConcern setting.
+The operations save, update and delete have an optional field called "writeConcern". Setting this property in your request
+changes the "consistency" of that operation.
+
+This allows each call case to overwrite the db's default WriteConcern setting.
 
 Since certain use cases might need more or less consistency than the databases default setting.
 
-By default MongoDB sets the database to the least restrictive async call and forget WriteConcern, which can lead to data loss.
+By default MongoDB sets the database to the least restrictive value which can lead to data loss on failure of the system.
 
-By being able to set it to a higher setting you can get to your eventual consistency.
+By being able to set it to a higher setting you can get to your required consistency.
 
-The property is "writeConcern" and can be set to any of the constant names in the Java MongoDB Driver WriteConcern class as a String.
+The property is "write_concern" and can be set to any of the constant names in the Java MongoDB Driver WriteConcern class as a String.
 
 WriteConcern has a valueOf method that takes that String and converts it to a fully configured WriteConcern class.
 
@@ -418,5 +422,5 @@ An example for delete would be
         "action": "delete",
         "collection": <collection>,
         "matcher": <matcher>,
-        "writeConcert": "SAFE"
+        "write_concern": "SAFE"
     }
