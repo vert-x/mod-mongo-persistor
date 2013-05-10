@@ -99,7 +99,7 @@ sourceSets {
 }
 
 task copyMod( type:Copy, dependsOn: 'classes', description: 'Assemble the module into the local mods directory' ) {
-  into "mods/$moduleName"
+  into "build/mods/$moduleName"
   from compileJava
   from 'src/main/resources'
   into( 'lib' ) {
@@ -117,14 +117,6 @@ task modZip( type: Zip, dependsOn: 'pullInDeps', description: 'Package the modul
 
 artifacts {
   archives modZip
-}
-
-task cleanModsDir(type: Delete) {
-  delete 'mods'
-}
-
-clean {
-  dependsOn cleanModsDir
 }
 
 test {
