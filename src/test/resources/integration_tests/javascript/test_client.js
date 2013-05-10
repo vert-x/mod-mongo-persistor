@@ -21,26 +21,24 @@ var vassert = require("vertx_assert");
 
 var eb = vertx.eventBus;
 
-var persistorConfig = {address: 'test.persistor', db_name: 'test_db', fake: true}
+var isFake = false;
+
+var persistorConfig = {address: 'test.persistor', db_name: 'test_db', fake: isFake}
 var script = this;
 container.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function(err, deployID) {
   if (err != null) {
     err.printStackTrace();
   } else {
-    deleteAll();
-    vertxTests.startTests(script);
+    eb.send('test.persistor', {
+      collection: 'testcoll',
+      action: 'delete',
+      matcher: {}
+    }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      vertxTests.startTests(script);
+    });
   }
 });
-
-function deleteAll() {
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'delete',
-    matcher: {}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-  });
-}
 
 function testSave() {
   eb.send('test.persistor', {
@@ -103,8 +101,9 @@ function testSave() {
             vassert.assertEquals('ok', reply.status);
             vassert.assertEquals('fox', reply.result.name);
             vassert.assertEquals(21, reply.result.age, 0);
+            vassert.testComplete();
           });
-          vassert.testComplete();
+
         });
       });
     });
@@ -125,28 +124,29 @@ function testFind() {
     }
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
+    eb.send('test.persistor', {
+      collection: 'testcoll',
+      action: 'find',
+      matcher: {
+        name: 'tim'
+      }
+    }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(1, reply.results.length, 0);
+      var res = reply.results[0];
+      vassert.assertEquals('tim', res.name);
+      vassert.assertEquals(40, res.age, 0);
+      vassert.assertEquals(3.14159, res.pi, 0);
+      vassert.assertTrue(res.male);
+      vassert.assertEquals(2, res.cheeses.length, 0);
+      vassert.assertEquals('brie', res.cheeses[0]);
+      vassert.assertEquals('stilton', res.cheeses[1]);
+      vassert.assertTrue(undefined != res._id);
+      vassert.testComplete();
+    });
   });
 
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    matcher: {
-      name: 'tim'
-    }
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(1, reply.results.length, 0);
-    var res = reply.results[0];
-    vassert.assertEquals('tim', res.name);
-    vassert.assertEquals(40, res.age, 0);
-    vassert.assertEquals(3.14159, res.pi, 0);
-    vassert.assertTrue(res.male);
-    vassert.assertEquals(2, res.cheeses.length, 0);
-    vassert.assertEquals('brie', res.cheeses[0]);
-    vassert.assertEquals('stilton', res.cheeses[1]);
-    vassert.assertTrue(undefined != res._id);
-    vassert.testComplete();
-  });
+
 }
 
 function testFindOne() {
@@ -163,26 +163,25 @@ function testFindOne() {
     }
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-  });
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'findone',
-    matcher: {
-      name: 'tim'
-    }
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    var res = reply.result;
-    vassert.assertEquals('tim', res.name);
-    vassert.assertEquals(40, res.age, 0);
-    vassert.assertEquals(3.14159, res.pi, 0);
-    vassert.assertTrue(res.male);
-    vassert.assertEquals(2, res.cheeses.length, 0);
-    vassert.assertEquals('brie', res.cheeses[0]);
-    vassert.assertEquals('stilton', res.cheeses[1]);
-    vassert.assertTrue(undefined != res._id);
-    vassert.testComplete();
+    eb.send('test.persistor', {
+      collection: 'testcoll',
+      action: 'findone',
+      matcher: {
+        name: 'tim'
+      }
+    }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      var res = reply.result;
+      vassert.assertEquals('tim', res.name);
+      vassert.assertEquals(40, res.age, 0);
+      vassert.assertEquals(3.14159, res.pi, 0);
+      vassert.assertTrue(res.male);
+      vassert.assertEquals(2, res.cheeses.length, 0);
+      vassert.assertEquals('brie', res.cheeses[0]);
+      vassert.assertEquals('stilton', res.cheeses[1]);
+      vassert.assertTrue(undefined != res._id);
+      vassert.testComplete();
+    });
   });
 }
 
@@ -192,6 +191,8 @@ function testFindWithLimit() {
 
   var limit = 12;
 
+  var count = 0;
+
   for (var i = 0; i < num; i++) {
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -201,19 +202,23 @@ function testFindWithLimit() {
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+
+      if (++count == num) {
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'find',
+          limit: limit,
+          matcher: {}
+        }, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.assertEquals(limit, reply.results.length, 0);
+          vassert.testComplete();
+        });
+      }
     });
   }
 
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    limit: limit,
-    matcher: {}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(limit, reply.results.length, 0);
-    vassert.testComplete();
-  });
+
 }
 
 function testFindWithSkipAndLimit() {
@@ -223,6 +228,8 @@ function testFindWithSkipAndLimit() {
   var skip = 10;
   var limit = 12;
 
+  var count = 0;
+
   for (var i = 0; i < num; i++) {
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -232,102 +239,115 @@ function testFindWithSkipAndLimit() {
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+
+      if (++count == num) {
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'find',
+          skip: skip,
+          limit: limit,
+          matcher: {}
+        }, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.assertEquals(10, reply.results.length, 0);
+          vassert.testComplete();
+        });
+      }
     });
   }
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    skip: skip,
-    limit: limit,
-    matcher: {}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(10, reply.results.length, 0);
-    vassert.testComplete();
-  });
 }
 
 function testFindWithSort() {
 
-  var num = 10;
+  if (!isFake) {
 
-  for (var i = 0; i < num; i++) {
-    eb.send('test.persistor', {
-      collection: 'testcoll',
-      action: 'save',
-      document: {
-        name: 'tim',
-        age: Math.floor(Math.random()*11)
-      }
-    }, function(reply) {
-      vassert.assertEquals('ok', reply.status);
-    });
-  }
+    // Fongo doesn't seem to support sorting cursors
 
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    matcher: {},
-    sort: {age: 1}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(num, reply.results.length, 0);
-    var last = 0;
-    for (var i = 0; i < reply.results.length; i++) {
-      var age = reply.results[i].age;
-      vassert.assertTrue(age >= last);
-      last = age;
+    var num = 10;
+    var count = 0;
+
+    for (var i = 0; i < num; i++) {
+      eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'save',
+        document: {
+          name: 'tim',
+          age: Math.floor(Math.random()*11)
+        }
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+
+        if (++count == num) {
+          vertx.setTimer(1000, function() {
+            eb.send('test.persistor', {
+              collection: 'testcoll',
+              action: 'find',
+              matcher: {},
+              sort: {age: 1}
+            }, function(reply) {
+              vassert.assertEquals('ok', reply.status);
+              vassert.assertEquals(num, reply.results.length, 0);
+              var last = 0;
+              for (var i = 0; i < reply.results.length; i++) {
+                var age = reply.results[i].age;
+                vassert.assertTrue(age >= last);
+                last = age;
+              }
+              vassert.testComplete();
+            });
+          });
+
+        }
+      });
     }
+  } else {
     vassert.testComplete();
-  });
+  }
 }
 
 function testFindWithKeys() {
 	
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'save',
+    document: {
+      name: 'tim',
+      age: Math.floor(Math.random()*11)
+    }
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
-      action: 'save',
-      document: {
-        name: 'tim',
-        age: Math.floor(Math.random()*11)
-      }
+      action: 'findone',
+      keys: { name: 1},
+      sort: {age: 1}
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals('tim', reply.result.name);
+
+      eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'findone',
+        matcher: {name: 'tim'},
+        keys: { name: 1},
+        sort: {age: 1}
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertEquals('tim', reply.result.name);
+
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'find',
+          matcher: {name: 'tim'},
+          keys: { name: 1},
+          sort: {age: 1}
+        }, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.assertEquals('tim', reply.results[0].name);
+          vassert.testComplete();
+        });
+      });
     });
-  
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'findone',
-    keys: { name: 1},
-    sort: {age: 1}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals('tim', reply.result.name);
-  });
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'findone',
-    matcher: {name: 'tim'},
-    keys: { name: 1},
-    sort: {age: 1}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals('tim', reply.result.name);
-  });
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    matcher: {name: 'tim'},
-    keys: { name: 1},
-    sort: {age: 1}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals('tim', reply.results[0].name);
-    vassert.testComplete();
   });
 }
 
@@ -335,6 +355,7 @@ function testFindWithKeys() {
 function testFindBatched() {
 
   var num = 103;
+  var count = 0;
 
   for (var i = 0; i < num; i++) {
     eb.send('test.persistor', {
@@ -346,32 +367,37 @@ function testFindBatched() {
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+
+      if (++count == num) {
+        var received = 0;
+
+        function createReplyHandler() {
+          return function(reply, replier) {
+            received += reply.results.length;
+            if (received < num) {
+              vassert.assertEquals(10, reply.results.length, 0);
+              vassert.assertEquals('more-exist', reply.status);
+              replier({}, createReplyHandler());
+            } else {
+              vassert.assertEquals(3, reply.results.length, 0);
+              vassert.assertEquals('ok', reply.status);
+              vassert.testComplete();
+            }
+          }
+        }
+
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'find',
+          matcher: {},
+          batch_size: 10
+        }, createReplyHandler());
+      }
+
     });
   }
 
-  var received = 0;
 
-  function createReplyHandler() {
-    return function(reply, replier) {
-      received += reply.results.length;
-      if (received < num) {
-        vassert.assertEquals(10, reply.results.length, 0);
-        vassert.assertEquals('more-exist', reply.status);
-        replier({}, createReplyHandler());
-      } else {
-        vassert.assertEquals(3, reply.results.length, 0);
-        vassert.assertEquals('ok', reply.status);
-        vassert.testComplete();
-      }
-    }
-  }
-
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'find',
-    matcher: {},
-    batch_size: 10
-  }, createReplyHandler());
 }
 
 function testDelete() {
@@ -384,59 +410,59 @@ function testDelete() {
     }
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-  });
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'save',
-    document: {
-      name: 'bob'
-    }
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-  });
-  // Testing insert with writeConcern
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'save',
-    writeConcert: "JOURNAL_SAFE",
-    document: {
-      name: 'mark'
-    }
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-  });
-  // Testing delete with writeConcern
-  eb.send('test.persistor', {
-     collection: 'testcoll',
-     action: 'delete',
-     writeConcern: "NORMAL",
-     matcher: {
-       name: 'mark'
-     }
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-  });
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'delete',
-    matcher: {
-      name: 'tim'
-    }
-  }, function(reply) {
-
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(1, reply.number, 0);
-
     eb.send('test.persistor', {
       collection: 'testcoll',
-      action: 'find',
-      matcher: {
+      action: 'save',
+      document: {
         name: 'bob'
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
-      vassert.assertEquals(1, reply.results.length, 0);
-      vassert.testComplete();
+      // Testing insert with writeConcern
+      eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'save',
+        writeConcert: "JOURNAL_SAFE",
+        document: {
+          name: 'mark'
+        }
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        // Testing delete with writeConcern
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'delete',
+          writeConcern: "NORMAL",
+          matcher: {
+            name: 'mark'
+          }
+        }, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          eb.send('test.persistor', {
+            collection: 'testcoll',
+            action: 'delete',
+            matcher: {
+              name: 'tim'
+            }
+          }, function(reply) {
+
+            vassert.assertEquals('ok', reply.status);
+            vassert.assertEquals(1, reply.number, 0);
+
+            eb.send('test.persistor', {
+              collection: 'testcoll',
+              action: 'find',
+              matcher: {
+                name: 'bob'
+              }
+            }, function(reply) {
+              vassert.assertEquals('ok', reply.status);
+              vassert.assertEquals(1, reply.results.length, 0);
+              vassert.testComplete();
+            });
+          });
+        });
+      });
     });
   });
 }
@@ -444,6 +470,7 @@ function testDelete() {
 function testCount() {
 
   var num = 10;
+  var count = 0;
 
   for (var i = 0; i < num; i++) {
     eb.send('test.persistor', {
@@ -455,16 +482,19 @@ function testCount() {
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
+      if (++count == num) {
+        eb.send('test.persistor', {
+          collection: 'testcoll',
+          action: 'count',
+          matcher: {}
+        }, function(reply) {
+          vassert.assertEquals('ok', reply.status);
+          vassert.assertEquals(num, reply.count, 0);
+          vassert.testComplete();
+        });
+      }
     });
   }
 
-  eb.send('test.persistor', {
-    collection: 'testcoll',
-    action: 'count',
-    matcher: {}
-  }, function(reply) {
-    vassert.assertEquals('ok', reply.status);
-    vassert.assertEquals(num, reply.count, 0);
-    vassert.testComplete();
-  });
+
 }

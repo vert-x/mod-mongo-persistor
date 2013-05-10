@@ -27,6 +27,8 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.vertx.testtools.VertxAssert.assertEquals;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
@@ -49,7 +51,7 @@ public class PersistorTest extends TestVerticle {
     JsonObject config = new JsonObject();
     config.putString("address", "test.persistor");
     config.putString("db_name", "test_db");
-    config.putBoolean("fake", true);
+    config.putBoolean("fake", false);
     container.deployModule(System.getProperty("vertx.modulename"), config, 1, new AsyncResultHandler<String>() {
       public void handle(AsyncResult<String> ar) {
         if (ar.succeeded()) {
@@ -71,32 +73,37 @@ public class PersistorTest extends TestVerticle {
     eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
         assertEquals("ok", reply.body().getString("status"));
-      }
-    });
+        final int numDocs = 1;
+        final AtomicInteger count = new AtomicInteger(0);
+        for (int i = 0; i < numDocs; i++) {
+          JsonObject doc = new JsonObject().putString("name", "joe bloggs").putNumber("age", 40).putString("cat-name", "watt");
+          JsonObject json = new JsonObject().putString("collection", "testcoll").putString("action", "save").putObject("document", doc);
+          eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
+            public void handle(Message<JsonObject> reply) {
+              assertEquals("ok", reply.body().getString("status"));
+              if (count.incrementAndGet() == numDocs) {
+                JsonObject matcher = new JsonObject().putString("name", "joe bloggs");
 
-    final int numDocs = 1;
-    for (int i = 0; i < numDocs; i++) {
-      JsonObject doc = new JsonObject().putString("name", "joe bloggs").putNumber("age", 40).putString("cat-name", "watt");
-      json = new JsonObject().putString("collection", "testcoll").putString("action", "save").putObject("document", doc);
-      eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
-        public void handle(Message<JsonObject> reply) {
-          assertEquals("ok", reply.body().getString("status"));
+                JsonObject json = new JsonObject().putString("collection", "testcoll").putString("action", "find").putObject("matcher", matcher);
+
+                eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
+                  public void handle(Message<JsonObject> reply) {
+                    assertEquals("ok", reply.body().getString("status"));
+                    JsonArray results = reply.body().getArray("results");
+                    assertEquals(numDocs, results.size());
+                    testComplete();
+                  }
+                });
+              }
+            }
+          });
         }
-      });
-    }
 
-    JsonObject matcher = new JsonObject().putString("name", "joe bloggs");
 
-    json = new JsonObject().putString("collection", "testcoll").putString("action", "find").putObject("matcher", matcher);
-
-    eb.send("test.persistor", json, new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> reply) {
-        assertEquals("ok", reply.body().getString("status"));
-        JsonArray results = reply.body().getArray("results");
-        assertEquals(numDocs, results.size());
-        testComplete();
       }
     });
+
+
 
 
   }

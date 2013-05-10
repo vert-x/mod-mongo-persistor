@@ -43,10 +43,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected String dbName;
   protected String username;
   protected String password;
+  private boolean fake;
 
   protected Mongo mongo;
   protected DB db;
-  protected Fongo fongo;
 
   public void start() {
     super.start();
@@ -57,11 +57,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     dbName = getOptionalStringConfig("db_name", "default_db");
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
-    boolean fake = getOptionalBooleanConfig("fake", false);
+    fake = getOptionalBooleanConfig("fake", false);
     int poolSize = getOptionalIntConfig("pool_size", 10);
 
     if (fake) {
-      fongo = new Fongo("fongo server");
+      Fongo fongo = new Fongo("fongo server");
       db = fongo.getDB(dbName);
       mongo = fongo.getMongo();
     } else {
@@ -87,6 +87,17 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   }
 
   public void handle(Message<JsonObject> message) {
+    if (fake) {
+      // If fake, need to synchronized since Fongo is not threadsafe
+      synchronized (this) {
+        doHandle(message);
+      }
+    } else {
+      doHandle(message);
+    }
+  }
+
+  private void doHandle(Message<JsonObject> message) {
 
     String action = message.body().getString("action");
 
@@ -125,7 +136,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         break;
       default:
         sendError(message, "Invalid action: " + action);
-        return;
     }
   }
 
@@ -151,6 +161,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
+    writeConcern = WriteConcern.SAFE;
     WriteResult res = coll.save(obj, writeConcern);
     if (res.getError() == null) {
       if (genID != null) {
@@ -208,10 +219,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       limit = -1;
     }
     Integer skip = (Integer)message.body().getNumber("skip");
-    if(skip == null) {
+    if (skip == null) {
       skip = -1;
     }
-
     Integer batchSize = (Integer)message.body().getNumber("batch_size");
     if (batchSize == null) {
       batchSize = 100;
@@ -227,8 +237,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     DBCursor cursor = (keys == null) ? 
     			coll.find(jsonToDBObject(matcher)) : 
     			coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
-    if(skip != -1) {
-        cursor.skip(skip);
+    if (skip != -1) {
+      cursor.skip(skip);
     }
     if (limit != -1) {
       cursor.limit(limit);
