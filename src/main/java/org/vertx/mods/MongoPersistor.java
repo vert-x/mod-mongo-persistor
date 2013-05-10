@@ -16,7 +16,6 @@
 
 package org.vertx.mods;
 
-import com.foursquare.fongo.Fongo;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import org.vertx.java.busmods.BusModBase;
@@ -43,7 +42,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected String dbName;
   protected String username;
   protected String password;
-  private boolean fake;
 
   protected Mongo mongo;
   protected DB db;
@@ -57,28 +55,20 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     dbName = getOptionalStringConfig("db_name", "default_db");
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
-    fake = getOptionalBooleanConfig("fake", false);
     int poolSize = getOptionalIntConfig("pool_size", 10);
 
-    if (fake) {
-      Fongo fongo = new Fongo("fongo server");
-      db = fongo.getDB(dbName);
-      mongo = fongo.getMongo();
-    } else {
-      try {
-        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        builder.connectionsPerHost(poolSize);
-        ServerAddress address = new ServerAddress(host, port);
-        mongo = new MongoClient(address, builder.build());
-        db = mongo.getDB(dbName);
-        if (username != null && password != null) {
-          db.authenticate(username, password.toCharArray());
-        }
-      } catch (UnknownHostException e) {
-        logger.error("Failed to connect to mongo server", e);
+    try {
+      MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+      builder.connectionsPerHost(poolSize);
+      ServerAddress address = new ServerAddress(host, port);
+      mongo = new MongoClient(address, builder.build());
+      db = mongo.getDB(dbName);
+      if (username != null && password != null) {
+        db.authenticate(username, password.toCharArray());
       }
+    } catch (UnknownHostException e) {
+      logger.error("Failed to connect to mongo server", e);
     }
-
     eb.registerHandler(address, this);
   }
 
@@ -87,17 +77,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   }
 
   public void handle(Message<JsonObject> message) {
-    if (fake) {
-      // If fake, need to synchronized since Fongo is not threadsafe
-      synchronized (this) {
-        doHandle(message);
-      }
-    } else {
-      doHandle(message);
-    }
-  }
-
-  private void doHandle(Message<JsonObject> message) {
 
     String action = message.body().getString("action");
 
