@@ -23,7 +23,21 @@ var eb = vertx.eventBus;
 
 var isFake = false;
 
-var persistorConfig = {address: 'test.persistor', db_name: 'test_db', fake: isFake}
+var persistorConfig =
+{
+  address: 'test.persistor',
+  db_name: java.lang.System.getProperty("vertx.mongo.database", "test_db"),
+  host: java.lang.System.getProperty("vertx.mongo.host", "localhost"),
+  port: java.lang.Integer.valueOf(java.lang.System.getProperty("vertx.mongo.port", "27017")),
+  fake: isFake
+}
+var username = java.lang.System.getProperty("vertx.mongo.username");
+var password = java.lang.System.getProperty("vertx.mongo.password");
+if (username != null) {
+  persistorConfig.username = username;
+  persistorConfig.password = password;
+}
+
 var script = this;
 container.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function(err, deployID) {
   if (err != null) {

@@ -50,7 +50,15 @@ public class PersistorTest extends TestVerticle {
     eb = vertx.eventBus();
     JsonObject config = new JsonObject();
     config.putString("address", "test.persistor");
-    config.putString("db_name", "test_db");
+    config.putString("db_name", System.getProperty("vertx.mongo.database", "test_db"));
+    config.putString("host", System.getProperty("vertx.mongo.host", "localhost"));
+    config.putNumber("port", Integer.valueOf(System.getProperty("vertx.mongo.port", "27017")));
+    String username = System.getProperty("vertx.mongo.username");
+    String password = System.getProperty("vertx.mongo.password");
+    if (username != null) {
+      config.putString("username", username);
+      config.putString("password", password);
+    }
     config.putBoolean("fake", false);
     container.deployModule(System.getProperty("vertx.modulename"), config, 1, new AsyncResultHandler<String>() {
       public void handle(AsyncResult<String> ar) {
