@@ -68,6 +68,7 @@ Please edit the details below.
  */
 def configurePom(def pom) {
   pom.project {
+    name rootProject.name
     description 'MongoDB Persistor Module for Vert.x'
     inceptionYear '2012'
     packaging 'zip'
