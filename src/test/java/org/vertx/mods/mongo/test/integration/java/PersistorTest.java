@@ -110,10 +110,24 @@ public class PersistorTest extends TestVerticle {
 
       }
     });
+  }
 
+  @Test
+  public void testCommand() throws Exception {
+    JsonObject ping = new JsonObject().putString("action", "command")
+                                      .putString("command", "{ping:1}");
+    
+    eb.send("test.persistor", ping, new Handler<Message<JsonObject>>() {
+      public void handle(Message<JsonObject> reply) {
+          Number ok = reply.body()
+                           .getObject("result")
+                           .getNumber("ok");
 
-
-
+          assertEquals(1.0, ok);
+          testComplete();
+      }
+    });
   }
 
 }
+

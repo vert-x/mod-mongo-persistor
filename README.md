@@ -396,6 +396,30 @@ If an error occurs in finding the documents a reply is returned:
     
 Where `message` is an error message.
 
+### Command
+
+Runs an arbitrary MongoDB command.
+
+Command can be used to run more advanced MongoDB features, such as using Mapreduce. 
+There is a complete list of commands at http://docs.mongodb.org/manual/reference/command/.
+
+An example that just pings to make sure the mongo instance is up would be:
+
+    {
+        "action": "command",
+        "command": "{ ping: 1 }"
+    }
+
+You would expect a result something like:
+
+    {
+        "result": {
+            "serverUsed":"localhost/127.0.0.1:27017",
+            "ok":1.0
+        },
+        "status":"ok"
+    }
+
 ### writeConcern
 
 The operations save, update and delete have an optional field called "writeConcern". Setting this property in your request
