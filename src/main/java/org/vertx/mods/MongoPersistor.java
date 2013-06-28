@@ -51,7 +51,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
     address = getOptionalStringConfig("address", "vertx.mongopersistor");
 
-    System.out.println("Address is " + address);
     host = getOptionalStringConfig("host", "localhost");
     port = getOptionalIntConfig("port", 27017);
     dbName = getOptionalStringConfig("db_name", "default_db");
@@ -72,8 +71,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       logger.error("Failed to connect to mongo server", e);
     }
     eb.registerHandler(address, this);
-
-    System.out.println("Started mongo");
   }
 
   public void stop() {
