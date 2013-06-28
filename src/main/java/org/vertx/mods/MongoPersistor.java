@@ -405,7 +405,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
     
-    CommandResult result = db.command(command);
+    DBObject commandObject = (DBObject) JSON.parse(command);
+    CommandResult result = db.command(commandObject);
     
     reply.putObject("result", new JsonObject(result.toString()));
     sendOK(message, reply);
