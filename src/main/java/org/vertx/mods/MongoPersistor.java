@@ -42,6 +42,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected String dbName;
   protected String username;
   protected String password;
+  protected boolean autoConnectRetry;
+  protected int socketTimeout;
 
   protected Mongo mongo;
   protected DB db;
@@ -58,10 +60,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
     int poolSize = getOptionalIntConfig("pool_size", 10);
+    autoConnectRetry = getOptionalBooleanConfig("autoConnectRetry", true);
+    socketTimeout = getOptionalIntConfig("socketTimeout", 60000);
 
     try {
       MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
       builder.connectionsPerHost(poolSize);
+      builder.autoConnectRetry(autoConnectRetry);
+      builder.socketTimeout(socketTimeout);
       ServerAddress address = new ServerAddress(host, port);
       mongo = new MongoClient(address, builder.build());
       db = mongo.getDB(dbName);
