@@ -71,7 +71,7 @@ def configurePom(def pom) {
     name rootProject.name
     description 'MongoDB Persistor Module for Vert.x'
     inceptionYear '2012'
-    packaging produceJar == 'false' ? 'pom' : 'jar'
+    packaging 'jar'
     url 'https://github.com/vert-x/mod-mongo-persistor'
 
     developers {
