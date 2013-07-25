@@ -74,7 +74,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   }
 
   public void stop() {
-    mongo.close();
+    if(mongo != null) {
+      mongo.close();
+    }
   }
 
   public void handle(Message<JsonObject> message) {
