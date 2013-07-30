@@ -116,6 +116,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       case "getCollections":
         getCollections(message);
         break;
+      case "dropCollection":
+        dropCollection(message);
+        break;
       case "collectionStats":
         getCollectionStats(message);
         break;
@@ -145,7 +148,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(doc);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    // Backwards compatibility
+    if (writeConcern == null) {
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    }
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
@@ -182,7 +189,12 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     Boolean upsert =  message.body().getBoolean("upsert",false);
     Boolean multi = message.body().getBoolean("multi",false);
     DBCollection coll = db.getCollection(collection);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    // Backwards compatibility
+    if (writeConcern == null) {
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    }
+
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
@@ -367,7 +379,12 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(matcher);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    // Backwards compatibility
+    if (writeConcern == null) {
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+    }
+
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
@@ -382,6 +399,25 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     reply.putArray("collections", new JsonArray(db.getCollectionNames()
         .toArray()));
     sendOK(message, reply);
+  }
+
+  private void dropCollection(Message<JsonObject> message) {
+
+    JsonObject reply = new JsonObject();
+    String collection = getMandatoryString("collection", message);
+
+    if (collection == null) {
+      return;
+    }
+
+    DBCollection coll = db.getCollection(collection);
+
+    try {
+      coll.drop();
+      sendOK(message, reply);
+    } catch (MongoException mongoException) {
+      sendError(message, "exception thrown when attempting to drop collection: " + collection + " \n" + mongoException.getMessage());
+    }
   }
 
   private void getCollectionStats(Message<JsonObject> message) {
