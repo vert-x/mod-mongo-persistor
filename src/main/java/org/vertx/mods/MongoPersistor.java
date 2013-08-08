@@ -94,39 +94,43 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
 
-    switch (action) {
-      case "save":
-        doSave(message);
-        break;
-      case "update":
-        doUpdate(message);
-        break;    
-      case "find":
-        doFind(message);
-        break;
-      case "findone":
-        doFindOne(message);
-        break;
-      case "delete":
-        doDelete(message);
-        break;
-      case "count":
-        doCount(message);
-        break;
-      case "getCollections":
-        getCollections(message);
-        break;
-      case "dropCollection":
-        dropCollection(message);
-        break;
-      case "collectionStats":
-        getCollectionStats(message);
-        break;
-      case "command":
-        runCommand(message);
-        break;
-      default:
-        sendError(message, "Invalid action: " + action);
+    try {
+      switch (action) {
+        case "save":
+          doSave(message);
+          break;
+        case "update":
+          doUpdate(message);
+          break;
+        case "find":
+          doFind(message);
+          break;
+        case "findone":
+          doFindOne(message);
+          break;
+        case "delete":
+          doDelete(message);
+          break;
+        case "count":
+          doCount(message);
+          break;
+        case "getCollections":
+          getCollections(message);
+          break;
+        case "dropCollection":
+          dropCollection(message);
+          break;
+        case "collectionStats":
+          getCollectionStats(message);
+          break;
+        case "command":
+          runCommand(message);
+          break;
+        default:
+          sendError(message, "Invalid action: " + action);
+      }
+    } catch (MongoException e) {
+        sendError(message, e.getMessage(), e);
     }
   }
 
