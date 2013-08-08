@@ -601,7 +601,7 @@ function testCollectionStats() {
                 var stats = reply.stats;
                 // Fails on CI
                 //vassert.assertEquals('localhost/127.0.0.1:27017', stats.serverUsed)
-                vassert.assertEquals('test_db.testcoll', stats.ns)
+                vassert.assertEquals('testcoll', stats.ns.slice(-"testcoll".length))
                 vassert.assertEquals(1, stats.count, 0)
                 vassert.testComplete();
             });
