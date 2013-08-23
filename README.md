@@ -184,6 +184,7 @@ To find documents send a JSON message to the module main address:
         "keys": <keys>,
         "skip": <offset>,
         "limit": <limit>,
+        "timeout": <cursor timeout>,
         "batch_size": <batch_size>
     }
     
@@ -194,6 +195,7 @@ Where:
 * `keys` is an optional JSON object that contains the fields that should be returned for matched documents. See MongoDB manual for more information. Example: { "name": 1 } will only return objects with _id and the name field
 * `skip` is a number which determines the number of documents to skip. This is optional. By default no documents are skipped.
 * `limit` is a number which determines the maximum total number of documents to return. This is optional. By default all documents are returned.
+* `timeout` is a number which determines how many milliseconds a cursor containing more data will be held onto. This is optional. By default, a cursor is held onto for 10 seconds.
 * `batch_size` is a number which determines how many documents to return in each reply JSON message. It's optional and the default value is `100`. Batching is discussed in more detail below.
 
 An example would be:
@@ -300,7 +302,7 @@ For instance, in JavaScript you might do something like:
         matcher: {}        
     }, createReplyHandler());
     
-If there is more data to be requested and you do not reply to get the next batch within a timeout (10 seconds), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.    
+If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.    
     
 
 ### Find One

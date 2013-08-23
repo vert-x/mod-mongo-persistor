@@ -252,6 +252,10 @@ public void handle(Message<JsonObject> message) {
     if (batchSize == null) {
       batchSize = 100;
     }
+    Integer timeout = (Integer)message.body().getNumber("timeout");
+    if (timeout == null) {
+      timeout = 10000; // 10 seconds
+    }
     JsonObject matcher = getMandatoryObject("matcher", message);
     if (matcher == null) {
       return;
@@ -272,7 +276,7 @@ public void handle(Message<JsonObject> message) {
     if (sort != null) {
       cursor.sort(sortObjectToDBObject(sort));
     }
-    sendBatch(message, cursor, batchSize);
+    sendBatch(message, cursor, batchSize, timeout);
   }
 
   private DBObject sortObjectToDBObject(Object sortObj) {
@@ -297,7 +301,7 @@ public void handle(Message<JsonObject> message) {
     }
   }
 
-  private void sendBatch(Message<JsonObject> message, final DBCursor cursor, final int max) {
+  private void sendBatch(Message<JsonObject> message, final DBCursor cursor, final int max, final int timeout) {
     int count = 0;
     JsonArray results = new JsonArray();
     while (cursor.hasNext() && count < max) {
@@ -310,8 +314,8 @@ public void handle(Message<JsonObject> message) {
     if (cursor.hasNext()) {
       JsonObject reply = createBatchMessage("more-exist", results);
 
-      // Set a timeout, if the user doesn't reply within 10 secs, close the cursor
-      final long timerID = vertx.setTimer(10000, new Handler<Long>() {
+      // If the user doesn't reply within timeout, close the cursor
+      final long timerID = vertx.setTimer(timeout, new Handler<Long>() {
         @Override
         public void handle(Long timerID) {
           container.logger().warn("Closing DB cursor on timeout");
@@ -328,7 +332,7 @@ public void handle(Message<JsonObject> message) {
         public void handle(Message<JsonObject> msg) {
           vertx.cancelTimer(timerID);
           // Get the next batch
-          sendBatch(msg, cursor, max);
+          sendBatch(msg, cursor, max, timeout);
         }
       });
 
