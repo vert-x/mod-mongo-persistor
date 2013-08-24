@@ -195,7 +195,7 @@ Where:
 * `keys` is an optional JSON object that contains the fields that should be returned for matched documents. See MongoDB manual for more information. Example: { "name": 1 } will only return objects with _id and the name field
 * `skip` is a number which determines the number of documents to skip. This is optional. By default no documents are skipped.
 * `limit` is a number which determines the maximum total number of documents to return. This is optional. By default all documents are returned.
-* `timeout` is a number which determines how many milliseconds a cursor containing more data will be held onto. This is optional. By default, a cursor is held onto for 10 seconds.
+* `timeout` is a positive number which determines how many milliseconds a cursor containing more data will be held onto. This is optional. By default, a cursor is held onto for 10 seconds.
 * `batch_size` is a number which determines how many documents to return in each reply JSON message. It's optional and the default value is `100`. Batching is discussed in more detail below.
 
 An example would be:

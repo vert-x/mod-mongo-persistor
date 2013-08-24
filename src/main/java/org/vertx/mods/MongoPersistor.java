@@ -253,7 +253,7 @@ public void handle(Message<JsonObject> message) {
       batchSize = 100;
     }
     Integer timeout = (Integer)message.body().getNumber("timeout");
-    if (timeout == null) {
+    if (timeout == null || timeout < 0) {
       timeout = 10000; // 10 seconds
     }
     JsonObject matcher = getMandatoryObject("matcher", message);
