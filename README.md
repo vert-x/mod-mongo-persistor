@@ -47,6 +47,23 @@ Let's take a look at each field in turn:
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
 
+### Replsets or sharding
+
+If you want to use sharding or a replica set then you need to provide a list of seed addresses, these take
+priority over the host/port combination.  For example:
+
+    {
+        "address": "test.my_persistor",
+        "seeds": [
+            { host: "192.168.1.100", port: 27000 },
+            { host: "192.168.1.101", port: 27001 }
+        ],
+        "pool_size": 20,
+        "db_name": "my_db"
+    }
+
+The seeds variable takes a list of objects which specify the host and port of each member of your seed list.
+
 ## Operations
 
 The module supports the following operations

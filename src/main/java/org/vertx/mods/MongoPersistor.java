@@ -25,6 +25,8 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected Mongo mongo;
   protected DB db;
 
+  @Override
   public void start() {
     super.start();
 
@@ -61,14 +64,21 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     int poolSize = getOptionalIntConfig("pool_size", 10);
     autoConnectRetry = getOptionalBooleanConfig("autoConnectRetry", true);
     socketTimeout = getOptionalIntConfig("socketTimeout", 60000);
+    JsonArray seedsProperty = config.getArray("seeds");
 
     try {
       MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
       builder.connectionsPerHost(poolSize);
       builder.autoConnectRetry(autoConnectRetry);
       builder.socketTimeout(socketTimeout);
-      ServerAddress address = new ServerAddress(host, port);
-      mongo = new MongoClient(address, builder.build());
+      if (seedsProperty == null) {
+          ServerAddress address = new ServerAddress(host, port);
+          mongo = new MongoClient(address, builder.build());
+      } else {
+          List<ServerAddress> seeds = makeSeeds(seedsProperty);
+          mongo = new MongoClient(seeds, builder.build());
+      }
+
       db = mongo.getDB(dbName);
       if (username != null && password != null) {
         db.authenticate(username, password.toCharArray());
@@ -79,13 +89,26 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     eb.registerHandler(address, this);
   }
 
-  public void stop() {
+    private List<ServerAddress> makeSeeds(JsonArray seedsProperty) throws UnknownHostException {
+        List<ServerAddress> seeds = new ArrayList<>();
+        for (Object elem : seedsProperty) {
+            JsonObject address = (JsonObject) elem;
+            String host = address.getString("host");
+            int port = address.getInteger("port");
+            seeds.add(new ServerAddress(host, port));
+        }
+        return seeds;
+    }
+
+  @Override
+public void stop() {
     if(mongo != null) {
       mongo.close();
     }
   }
 
-  public void handle(Message<JsonObject> message) {
+  @Override
+public void handle(Message<JsonObject> message) {
 
     String action = message.body().getString("action");
 
@@ -234,11 +257,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
     JsonObject keys = message.body().getObject("keys");
-    
+
     Object sort = message.body().getField("sort");
     DBCollection coll = db.getCollection(collection);
-    DBCursor cursor = (keys == null) ? 
-    			coll.find(jsonToDBObject(matcher)) : 
+    DBCursor cursor = (keys == null) ?
+    			coll.find(jsonToDBObject(matcher)) :
     			coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
     if (skip != -1) {
       cursor.skip(skip);
@@ -289,6 +312,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
       // Set a timeout, if the user doesn't reply within 10 secs, close the cursor
       final long timerID = vertx.setTimer(10000, new Handler<Long>() {
+        @Override
         public void handle(Long timerID) {
           container.logger().warn("Closing DB cursor on timeout");
           try {
@@ -300,6 +324,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
 
       message.reply(reply, new Handler<Message<JsonObject>>() {
+        @Override
         public void handle(Message<JsonObject> msg) {
           vertx.cancelTimer(timerID);
           // Get the next batch
@@ -325,7 +350,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected void sendMoreExist(String status, Message<JsonObject> message, JsonObject json) {
     json.putString("status", status);
     message.reply(json, new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> msg) {
+      @Override
+    public void handle(Message<JsonObject> msg) {
 
       }
     });
@@ -430,10 +456,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (collection == null) {
       return;
     }
-    
+
     DBCollection coll = db.getCollection(collection);
     CommandResult stats = coll.getStats();
-    
+
     JsonObject reply = new JsonObject();
     reply.putObject("stats", new JsonObject(stats.toString()));
     sendOK(message, reply);
@@ -442,16 +468,16 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   private void runCommand(Message<JsonObject> message) {
     JsonObject reply = new JsonObject();
-    
+
     String command = getMandatoryString("command", message);
 
     if (command == null) {
       return;
     }
-    
+
     DBObject commandObject = (DBObject) JSON.parse(command);
     CommandResult result = db.command(commandObject);
-    
+
     reply.putObject("result", new JsonObject(result.toString()));
     sendOK(message, reply);
   }
