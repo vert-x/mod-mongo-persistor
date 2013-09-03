@@ -18,6 +18,7 @@ package org.vertx.mods;
 
 import com.mongodb.*;
 import com.mongodb.util.JSON;
+
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
@@ -29,12 +30,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * MongoDB Persistor Bus Module<p>
  * Please see the README.md for a full descrition<p>
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  * @author Thomas Risberg
+ * @author Richard Warburton
  */
 public class MongoPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 
@@ -46,6 +50,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   protected String password;
   protected boolean autoConnectRetry;
   protected int socketTimeout;
+  protected boolean useSSL;
 
   protected Mongo mongo;
   protected DB db;
@@ -64,6 +69,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     int poolSize = getOptionalIntConfig("pool_size", 10);
     autoConnectRetry = getOptionalBooleanConfig("autoConnectRetry", true);
     socketTimeout = getOptionalIntConfig("socketTimeout", 60000);
+    useSSL = getOptionalBooleanConfig("useSSL", false);
+
     JsonArray seedsProperty = config.getArray("seeds");
 
     try {
@@ -71,6 +78,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       builder.connectionsPerHost(poolSize);
       builder.autoConnectRetry(autoConnectRetry);
       builder.socketTimeout(socketTimeout);
+
+      if(useSSL) {
+          builder.socketFactory(SSLSocketFactory.getDefault());
+      }
+
       if (seedsProperty == null) {
           ServerAddress address = new ServerAddress(host, port);
           mongo = new MongoClient(address, builder.build());
@@ -100,15 +112,15 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         return seeds;
     }
 
-  @Override
-public void stop() {
-    if(mongo != null) {
-      mongo.close();
+    @Override
+    public void stop() {
+        if (mongo != null) {
+            mongo.close();
+        }
     }
-  }
 
   @Override
-public void handle(Message<JsonObject> message) {
+  public void handle(Message<JsonObject> message) {
 
     String action = message.body().getString("action");
 
