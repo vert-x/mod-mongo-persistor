@@ -256,17 +256,19 @@ public void handle(Message<JsonObject> message) {
     if (timeout == null || timeout < 0) {
       timeout = 10000; // 10 seconds
     }
-    JsonObject matcher = getMandatoryObject("matcher", message);
-    if (matcher == null) {
-      return;
-    }
+    JsonObject matcher = message.body().getObject("matcher");
     JsonObject keys = message.body().getObject("keys");
 
     Object sort = message.body().getField("sort");
     DBCollection coll = db.getCollection(collection);
-    DBCursor cursor = (keys == null) ?
+    DBCursor cursor;
+    if (matcher != null) {
+      cursor = (keys == null) ?
     			coll.find(jsonToDBObject(matcher)) :
     			coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
+    } else {
+      cursor = coll.find();
+    }
     if (skip != -1) {
       cursor.skip(skip);
     }
