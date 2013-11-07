@@ -351,16 +351,6 @@ public void handle(Message<JsonObject> message) {
     return reply;
   }
 
-  protected void sendMoreExist(String status, Message<JsonObject> message, JsonObject json) {
-    json.putString("status", status);
-    message.reply(json, new Handler<Message<JsonObject>>() {
-      @Override
-    public void handle(Message<JsonObject> msg) {
-
-      }
-    });
-  }
-
   private void doFindOne(Message<JsonObject> message) {
     String collection = getMandatoryString("collection", message);
     if (collection == null) {
