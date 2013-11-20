@@ -481,6 +481,57 @@ function testDelete() {
   });
 }
 
+function testDropCollection() {
+
+    eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'save',
+        document: {
+            name: 'tim',
+            age: 40,
+            pi: 3.14159,
+            male: true,
+            cheeses: ['brie', 'stilton']
+        }
+    }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        eb.send('test.persistor', {
+            collection: 'testcoll',
+            action: 'find',
+            matcher: {
+                name: 'tim'
+            }
+        }, function(reply) {
+            vassert.assertEquals('ok', reply.status);
+            vassert.assertEquals(1, reply.results.length, 0);
+            var res = reply.results[0];
+            vassert.assertEquals('tim', res.name);
+            vassert.assertEquals(40, res.age, 0);
+            vassert.assertEquals(3.14159, res.pi, 0);
+            vassert.assertEquals(true, res.male);
+            vassert.assertEquals(2, res.cheeses.length, 0);
+            vassert.assertEquals('brie', res.cheeses[0]);
+            vassert.assertEquals('stilton', res.cheeses[1]);
+            eb.send('test.persistor', {
+                action: "dropCollection",
+                collection: 'testcoll'
+            }, function(reply) {
+                vassert.assertEquals('ok', reply.status);
+                eb.send('test.persistor', {
+                    action: 'getCollections'
+                }, function(reply) {
+                    vassert.assertEquals('ok', reply.status);
+                    var collList = reply.collections;
+                    for (var i = 0; i < collList.length; i++) {
+                        vassert.assertTrue(collList[i] != "testcoll")
+                    }
+                    vassert.testComplete();
+                });
+            });
+        });
+    });
+}
+
 function testCount() {
 
   var num = 10;
@@ -509,6 +560,50 @@ function testCount() {
       }
     });
   }
+}
 
+function testCollectionStats() {
+    eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'save',
+        document: {
+            name: 'tim',
+            age: 40,
+            pi: 3.14159,
+            male: true,
+            cheeses: ['brie', 'stilton']
+        }
+    }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        eb.send('test.persistor', {
+            collection: 'testcoll',
+            action: 'find',
+            matcher: {
+                name: 'tim'
+            }
+        }, function(reply) {
+            vassert.assertEquals('ok', reply.status);
+            vassert.assertEquals(1, reply.results.length, 0);
+            var res = reply.results[0];
+            vassert.assertEquals('tim', res.name);
+            vassert.assertEquals(40, res.age, 0);
+            vassert.assertEquals(3.14159, res.pi, 0);
+            vassert.assertEquals(true, res.male);
+            vassert.assertEquals(2, res.cheeses.length, 0);
+            vassert.assertEquals('brie', res.cheeses[0]);
+            vassert.assertEquals('stilton', res.cheeses[1]);
 
+            eb.send('test.persistor', {
+                collection: 'testcoll',
+                action: 'collectionStats'
+            }, function(reply) {
+                vassert.assertEquals('ok', reply.status);
+                var stats = reply.stats;
+                vassert.assertTrue(stats.serverUsed.length > 0)
+                vassert.assertEquals('testcoll', stats.ns.slice(-"testcoll".length))
+                vassert.assertEquals(1, stats.count, 0)
+                vassert.testComplete();
+            });
+        });
+    });
 }
