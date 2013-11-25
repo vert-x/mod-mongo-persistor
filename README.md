@@ -25,9 +25,10 @@ The mongo-persistor module takes the following configuration:
         "port": <port>,
         "db_name": <db_name>,
         "pool_size": <pool_size>,
-        "fake": <fake>
+        "fake": <fake>,
+		"useSSL": <bool>
     }
-    
+
 For example:
 
     {
@@ -46,6 +47,7 @@ Let's take a look at each field in turn:
 * `db_name` Name of the database in the MongoDB instance to use. Defaults to `default_db`.
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
+* `useSSL` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
 
 ### Replsets or sharding
 
