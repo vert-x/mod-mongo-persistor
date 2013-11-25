@@ -18,19 +18,17 @@ package org.vertx.mods;
 
 import com.mongodb.*;
 import com.mongodb.util.JSON;
-
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * MongoDB Persistor Bus Module<p>
@@ -79,16 +77,16 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       builder.autoConnectRetry(autoConnectRetry);
       builder.socketTimeout(socketTimeout);
 
-      if(useSSL) {
-          builder.socketFactory(SSLSocketFactory.getDefault());
+      if (useSSL) {
+        builder.socketFactory(SSLSocketFactory.getDefault());
       }
 
       if (seedsProperty == null) {
-          ServerAddress address = new ServerAddress(host, port);
-          mongo = new MongoClient(address, builder.build());
+        ServerAddress address = new ServerAddress(host, port);
+        mongo = new MongoClient(address, builder.build());
       } else {
-          List<ServerAddress> seeds = makeSeeds(seedsProperty);
-          mongo = new MongoClient(seeds, builder.build());
+        List<ServerAddress> seeds = makeSeeds(seedsProperty);
+        mongo = new MongoClient(seeds, builder.build());
       }
 
       db = mongo.getDB(dbName);
@@ -101,23 +99,23 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     eb.registerHandler(address, this);
   }
 
-    private List<ServerAddress> makeSeeds(JsonArray seedsProperty) throws UnknownHostException {
-        List<ServerAddress> seeds = new ArrayList<>();
-        for (Object elem : seedsProperty) {
-            JsonObject address = (JsonObject) elem;
-            String host = address.getString("host");
-            int port = address.getInteger("port");
-            seeds.add(new ServerAddress(host, port));
-        }
-        return seeds;
+  private List<ServerAddress> makeSeeds(JsonArray seedsProperty) throws UnknownHostException {
+    List<ServerAddress> seeds = new ArrayList<>();
+    for (Object elem : seedsProperty) {
+      JsonObject address = (JsonObject) elem;
+      String host = address.getString("host");
+      int port = address.getInteger("port");
+      seeds.add(new ServerAddress(host, port));
     }
+    return seeds;
+  }
 
-    @Override
-    public void stop() {
-        if (mongo != null) {
-            mongo.close();
-        }
+  @Override
+  public void stop() {
+    if (mongo != null) {
+      mongo.close();
     }
+  }
 
   @Override
   public void handle(Message<JsonObject> message) {
@@ -165,7 +163,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
           sendError(message, "Invalid action: " + action);
       }
     } catch (MongoException e) {
-        sendError(message, e.getMessage(), e);
+      sendError(message, e.getMessage(), e);
     }
   }
 
@@ -187,10 +185,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(doc);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern", ""));
     // Backwards compatibility
     if (writeConcern == null) {
-      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern", ""));
     }
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
@@ -220,18 +218,18 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBObject criteria = jsonToDBObject(criteriaJson);
 
-    JsonObject objNewJson =  getMandatoryObject("objNew", message);
+    JsonObject objNewJson = getMandatoryObject("objNew", message);
     if (objNewJson == null) {
       return;
     }
     DBObject objNew = jsonToDBObject(objNewJson);
-    Boolean upsert =  message.body().getBoolean("upsert",false);
-    Boolean multi = message.body().getBoolean("multi",false);
+    Boolean upsert = message.body().getBoolean("upsert", false);
+    Boolean multi = message.body().getBoolean("multi", false);
     DBCollection coll = db.getCollection(collection);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern", ""));
     // Backwards compatibility
     if (writeConcern == null) {
-      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern", ""));
     }
 
     if (writeConcern == null) {
@@ -252,19 +250,19 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (collection == null) {
       return;
     }
-    Integer limit = (Integer)message.body().getNumber("limit");
+    Integer limit = (Integer) message.body().getNumber("limit");
     if (limit == null) {
       limit = -1;
     }
-    Integer skip = (Integer)message.body().getNumber("skip");
+    Integer skip = (Integer) message.body().getNumber("skip");
     if (skip == null) {
       skip = -1;
     }
-    Integer batchSize = (Integer)message.body().getNumber("batch_size");
+    Integer batchSize = (Integer) message.body().getNumber("batch_size");
     if (batchSize == null) {
       batchSize = 100;
     }
-    Integer timeout = (Integer)message.body().getNumber("timeout");
+    Integer timeout = (Integer) message.body().getNumber("timeout");
     if (timeout == null || timeout < 0) {
       timeout = 10000; // 10 seconds
     }
@@ -277,8 +275,8 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     DBCursor cursor;
     if (matcher != null) {
       cursor = (keys == null) ?
-    			coll.find(jsonToDBObject(matcher)) :
-    			coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
+          coll.find(jsonToDBObject(matcher)) :
+          coll.find(jsonToDBObject(matcher), jsonToDBObject(keys));
     } else {
       cursor = coll.find();
     }
@@ -291,14 +289,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (sort != null) {
       cursor.sort(sortObjectToDBObject(sort));
     }
-    if (hint != null){
-        if(hint instanceof JsonObject){
-            cursor.hint(jsonToDBObject((JsonObject) hint));
-        } else if(hint instanceof String){
-            cursor.hint((String) hint);
-        } else {
-            throw new IllegalArgumentException("Cannot handle type " + hint.getClass().getSimpleName());
-        }
+    if (hint != null) {
+      if (hint instanceof JsonObject) {
+        cursor.hint(jsonToDBObject((JsonObject) hint));
+      } else if (hint instanceof String) {
+        cursor.hint((String) hint);
+      } else {
+        throw new IllegalArgumentException("Cannot handle type " + hint.getClass().getSimpleName());
+      }
     }
     sendBatch(message, cursor, batchSize, timeout);
   }
@@ -398,23 +396,23 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     sendOK(message, reply);
   }
 
-    private void doCount(Message<JsonObject> message) {
-        String collection = getMandatoryString("collection", message);
-        if (collection == null) {
-            return;
-        }
-        JsonObject matcher = message.body().getObject("matcher");
-        DBCollection coll = db.getCollection(collection);
-        long count;
-        if (matcher == null) {
-            count = coll.count();
-        } else {
-            count = coll.count(jsonToDBObject(matcher));
-        }
-        JsonObject reply = new JsonObject();
-        reply.putNumber("count", count);
-        sendOK(message, reply);
+  private void doCount(Message<JsonObject> message) {
+    String collection = getMandatoryString("collection", message);
+    if (collection == null) {
+      return;
     }
+    JsonObject matcher = message.body().getObject("matcher");
+    DBCollection coll = db.getCollection(collection);
+    long count;
+    if (matcher == null) {
+      count = coll.count();
+    } else {
+      count = coll.count(jsonToDBObject(matcher));
+    }
+    JsonObject reply = new JsonObject();
+    reply.putNumber("count", count);
+    sendOK(message, reply);
+  }
 
   private void doDelete(Message<JsonObject> message) {
     String collection = getMandatoryString("collection", message);
@@ -427,10 +425,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     DBCollection coll = db.getCollection(collection);
     DBObject obj = jsonToDBObject(matcher);
-    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern",""));
+    WriteConcern writeConcern = WriteConcern.valueOf(getOptionalStringConfig("writeConcern", ""));
     // Backwards compatibility
     if (writeConcern == null) {
-      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern",""));
+      writeConcern = WriteConcern.valueOf(getOptionalStringConfig("write_concern", ""));
     }
 
     if (writeConcern == null) {
@@ -502,7 +500,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   private DBObject jsonToDBObject(JsonObject object) {
     String str = object.encode();
-    return (DBObject)JSON.parse(str);
+    return (DBObject) JSON.parse(str);
   }
 
 }
