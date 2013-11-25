@@ -65,9 +65,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
     int poolSize = getOptionalIntConfig("pool_size", 10);
-    autoConnectRetry = getOptionalBooleanConfig("autoConnectRetry", true);
-    socketTimeout = getOptionalIntConfig("socketTimeout", 60000);
-    useSSL = getOptionalBooleanConfig("useSSL", false);
+    autoConnectRetry = getOptionalBooleanConfig("auto_connect_retry", true);
+    socketTimeout = getOptionalIntConfig("socket_timeout", 60000);
+    useSSL = getOptionalBooleanConfig("use_ssl", false);
 
     JsonArray seedsProperty = config.getArray("seeds");
 
@@ -128,6 +128,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
 
     try {
+
+      // Note actions should not be in camel case, but should use underscores
+      // I have kept the version with camel case so as not to break compatibility
+
       switch (action) {
         case "save":
           doSave(message);
@@ -148,12 +152,15 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
           doCount(message);
           break;
         case "getCollections":
+        case "get_collections":
           getCollections(message);
           break;
         case "dropCollection":
+        case "drop_collection":
           dropCollection(message);
           break;
         case "collectionStats":
+        case "collection_stats":
           getCollectionStats(message);
           break;
         case "command":

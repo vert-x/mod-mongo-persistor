@@ -26,7 +26,7 @@ The mongo-persistor module takes the following configuration:
         "db_name": <db_name>,
         "pool_size": <pool_size>,
         "fake": <fake>,
-		"useSSL": <bool>
+	    	"use_ssl": <bool>
     }
 
 For example:
@@ -47,7 +47,7 @@ Let's take a look at each field in turn:
 * `db_name` Name of the database in the MongoDB instance to use. Defaults to `default_db`.
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
-* `useSSL` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
+* `use_ssl` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
 
 ### Replsets or sharding
 
@@ -461,7 +461,7 @@ Where
 Returns the list of collection names in the db:
 
    {
-       "action": "getCollections"
+       "action": "get_collections"
    }
 
 All collections within the current db will be returned if they exist.
@@ -469,12 +469,12 @@ All collections within the current db will be returned if they exist.
 An example would be:
 
     {
-        "action": "getCollections"
+        "action": "get_collections"
     }
 
 This should return the list of all collections within the db
 
-When getCollections completes successfully, a reply message is sent back to the sender with the following data:
+When get_collections completes successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok",
@@ -501,7 +501,7 @@ Where
 Returns statistics about the db:
 
    {
-       "action": "collectionStats",
+       "action": "collection_stats",
        "collection": <collection>
    }
 
@@ -511,13 +511,13 @@ Where:
 An example would be:
 
     {
-        "action": "collectionStats",
+        "action": "collection_stats",
         "collection": "items"
     }
 
 This will return the statistics for the items collection within the db.
 
-When collectionStats completes successfully, a reply message is sent back to the sender with the following data:
+When collection_stats completes successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok",
@@ -560,7 +560,7 @@ Where
 Drops a collection from the db:
 
    {
-       "action": "dropCollection",
+       "action": "drop_collection",
        "collection": <collection>
    }
 
@@ -572,7 +572,7 @@ The collection will be removed from the db. This means that all the documents wi
 An example would be:
 
     {
-        "action": "dropCollection",
+        "action": "drop_collection",
         "collection": "items"
     }
 
