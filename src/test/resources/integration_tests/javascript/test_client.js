@@ -159,8 +159,39 @@ function testFind() {
       vassert.testComplete();
     });
   });
+}
 
-
+function testFindNoMatcher() {
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'save',
+    document: {
+      name: 'tim',
+      age: 40,
+      pi: 3.14159,
+      male: true,
+      cheeses: ['brie', 'stilton']
+    }
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
+    eb.send('test.persistor', {
+      collection: 'testcoll',
+      action: 'find'
+    }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(1, reply.results.length, 0);
+      var res = reply.results[0];
+      vassert.assertEquals('tim', res.name);
+      vassert.assertEquals(40, res.age, 0);
+      vassert.assertEquals(3.14159, res.pi, 0);
+      vassert.assertTrue(res.male);
+      vassert.assertEquals(2, res.cheeses.length, 0);
+      vassert.assertEquals('brie', res.cheeses[0]);
+      vassert.assertEquals('stilton', res.cheeses[1]);
+      vassert.assertTrue(undefined != res._id);
+      vassert.testComplete();
+    });
+  });
 }
 
 function testFindOne() {
