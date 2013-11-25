@@ -187,6 +187,7 @@ To find documents send a JSON message to the module main address:
         "skip": <offset>,
         "limit": <limit>,
         "timeout": <cursor timeout>,
+        "hint": <index hint>,
         "batch_size": <batch_size>
     }
     
@@ -198,6 +199,7 @@ Where:
 * `skip` is a number which determines the number of documents to skip. This is optional. By default no documents are skipped.
 * `limit` is a number which determines the maximum total number of documents to return. This is optional. By default all documents are returned.
 * `timeout` is a positive number which determines how many milliseconds a cursor containing more data will be held onto. This is optional. By default, a cursor is held onto for 10 seconds.
+* `hint` is either a string, specifying the name of the index to use, or a JSON object, representing the structure of the index to use. This is optional.
 * `batch_size` is a number which determines how many documents to return in each reply JSON message. It's optional and the default value is `100`. Batching is discussed in more detail below.
 
 An example would be:

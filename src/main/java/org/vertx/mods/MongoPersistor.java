@@ -271,6 +271,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     JsonObject matcher = message.body().getObject("matcher");
     JsonObject keys = message.body().getObject("keys");
 
+    Object hint = message.body().getField("hint");
     Object sort = message.body().getField("sort");
     DBCollection coll = db.getCollection(collection);
     DBCursor cursor;
@@ -289,6 +290,15 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     if (sort != null) {
       cursor.sort(sortObjectToDBObject(sort));
+    }
+    if (hint != null){
+        if(hint instanceof JsonObject){
+            cursor.hint(jsonToDBObject((JsonObject) hint));
+        } else if(hint instanceof String){
+            cursor.hint((String) hint);
+        } else {
+            throw new IllegalArgumentException("Cannot handle type " + hint.getClass().getSimpleName());
+        }
     }
     sendBatch(message, cursor, batchSize, timeout);
   }
