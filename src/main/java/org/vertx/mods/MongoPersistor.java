@@ -335,8 +335,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     JsonArray results = new JsonArray();
     while (cursor.hasNext() && count < max) {
       DBObject obj = cursor.next();
-      String s = obj.toString();
-      JsonObject m = new JsonObject(s);
+      JsonObject m = new JsonObject(obj.toMap());
       results.add(m);
       count++;
     }
@@ -396,8 +395,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     JsonObject reply = new JsonObject();
     if (res != null) {
-      String s = res.toString();
-      JsonObject m = new JsonObject(s);
+      JsonObject m = new JsonObject(res.toMap());
       reply.putObject("result", m);
     }
     sendOK(message, reply);
@@ -484,7 +482,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     CommandResult stats = coll.getStats();
 
     JsonObject reply = new JsonObject();
-    reply.putObject("stats", new JsonObject(stats.toString()));
+    reply.putObject("stats", new JsonObject(stats.toMap()));
     sendOK(message, reply);
 
   }
@@ -501,13 +499,12 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     DBObject commandObject = (DBObject) JSON.parse(command);
     CommandResult result = db.command(commandObject);
 
-    reply.putObject("result", new JsonObject(result.toString()));
+    reply.putObject("result", new JsonObject(result.toMap()));
     sendOK(message, reply);
   }
 
   private DBObject jsonToDBObject(JsonObject object) {
-    String str = object.encode();
-    return (DBObject) JSON.parse(str);
+    return new BasicDBObject(object.toMap());
   }
 
 }
