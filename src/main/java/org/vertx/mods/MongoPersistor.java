@@ -145,6 +145,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "findone":
           doFindOne(message);
           break;
+        case "findAndModify":
+        case "find_and_modify":
+          doFindAndModify(message);
+          break;
         case "delete":
           doDelete(message);
           break;
@@ -400,6 +404,32 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     sendOK(message, reply);
   }
+  
+  private void doFindAndModify(Message<JsonObject> message) {
+    String collection = getMandatoryString("collection", message);
+    if (collection == null) {
+      return;
+    }    
+    DBObject update = jsonToDBObject(getMandatoryObject("update", message));
+    JsonObject msgBody = message.body();
+    DBObject query = jsonToDBObject(msgBody.getObject("matcher"));
+    DBObject sort = jsonToDBObject(msgBody.getObject("sort"));
+    DBObject fields = jsonToDBObject(msgBody.getObject("fields"));
+    boolean remove = msgBody.getBoolean("remove", false);
+    boolean returnNew = msgBody.getBoolean("new", false);
+    boolean upsert = msgBody.getBoolean("upsert", false);
+
+    DBCollection coll = db.getCollection(collection);
+    DBObject result = coll.findAndModify(query, fields, sort, remove,
+      update, returnNew, upsert);
+
+    JsonObject reply = new JsonObject();
+    if (result != null) {
+      JsonObject m = new JsonObject(result.toMap());
+      reply.putObject("result", m);
+    }
+    sendOK(message, reply);
+  }
 
   private void doCount(Message<JsonObject> message) {
     String collection = getMandatoryString("collection", message);
@@ -503,8 +533,12 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     sendOK(message, reply);
   }
 
-  private DBObject jsonToDBObject(JsonObject object) {
-    return new BasicDBObject(object.toMap());
+  private static DBObject jsonToDBObject(JsonObject object) {
+    if (object != null) {
+      return new BasicDBObject(object.toMap());
+    } else {
+      return null;
+    }
   }
 
 }
