@@ -26,7 +26,8 @@ The mongo-persistor module takes the following configuration:
         "db_name": <db_name>,
         "pool_size": <pool_size>,
         "fake": <fake>,
-	    	"use_ssl": <bool>
+        "use_ssl": <bool>,
+        "read_preference": <e.g. "nearest" or "primary" etecetera>
     }
 
 For example:
@@ -36,7 +37,8 @@ For example:
         "host": "192.168.1.100",
         "port": 27000,
         "pool_size": 20,
-        "db_name": "my_db"
+        "db_name": "my_db",
+        "read_preference": "nearest"
     }
     
 Let's take a look at each field in turn:
@@ -48,6 +50,7 @@ Let's take a look at each field in turn:
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `fake` If true then a fake in memory Mongo DB server is used instead (using Fongo). Useful for testing!
 * `use_ssl` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
+* `read_preference` is the read preferences, see http://docs.mongodb.org/manual/core/read-preference/. Default is "primary".
 
 ### Replsets or sharding
 
