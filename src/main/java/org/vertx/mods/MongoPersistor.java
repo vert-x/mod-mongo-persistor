@@ -65,7 +65,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     dbName = getOptionalStringConfig("db_name", "default_db");
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
-    readPreference = parseReadPreference(getOptionalStringConfig("readPreference", "primary"));
+    readPreference = ReadPreference.valueOf(getOptionalStringConfig("read_preference", "primary"));
     int poolSize = getOptionalIntConfig("pool_size", 10);
     autoConnectRetry = getOptionalBooleanConfig("auto_connect_retry", true);
     socketTimeout = getOptionalIntConfig("socket_timeout", 60000);
@@ -112,24 +112,6 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     return seeds;
   }
-
-    private ReadPreference parseReadPreference(String readPrefString) {
-      switch (readPrefString) {
-        case "primary":
-          return ReadPreference.primary();
-        case "primaryPreferred":
-          return ReadPreference.primaryPreferred();
-        case "secondary":
-          return ReadPreference.secondary();
-        case "secondaryPreferred":
-          return ReadPreference.secondaryPreferred();
-        case "nearest":
-          return ReadPreference.nearest();
-        default:
-          logger.error("Unknown read preference: '" + readPrefString + "', using default = primary.");
-          return ReadPreference.primary();
-      }
-    }
 
   @Override
   public void stop() {
