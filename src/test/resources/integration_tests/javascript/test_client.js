@@ -638,3 +638,38 @@ function testCollectionStats() {
         });
     });
 }
+
+function testFindAndModify()
+{
+  // the document to test against 
+  var testDoc = { 'name': 'damian', 'age': 22 };
+  // the query to test
+  var testQuery = { 'collection': 'testcoll', 
+          'action': 'find_and_modify', 
+          'matcher': { 'name': testDoc.name },
+          'update': { '$inc': { 'age': 1 } },
+          'new': true
+  };
+  
+  // save a document in the db for this test 
+  eb.send('test.persistor',
+		  { 'action': 'save', 'collection': 'testcoll', 'document': testDoc }, 
+		  incrementAgeByOne);
+
+  function incrementAgeByOne(reply) {
+    // assert the `save` operation succeeded
+    vassert.assertEquals('ok', reply.status);
+    // perform the test findAndModify query
+    eb.send('test.persistor', testQuery, checkDocmentWasUpdated);
+  }
+
+  function checkDocmentWasUpdated(reply) {
+    // check the operation didn't cause an error
+    vassert.assertEquals('ok', reply.status);
+    // check the updated document has been returned
+    vassert.assertNotNull(reply.result);
+    // check the updated document's age has been incremented
+    vassert.assertEquals(testDoc.age + 1, reply.result.age, 0);
+    vassert.testComplete();
+  }
+}

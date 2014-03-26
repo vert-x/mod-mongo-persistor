@@ -361,6 +361,48 @@ If an error occurs in finding the documents a reply is returned:
 Where
 *`message` is an error message.
 
+### Find and modify
+
+The findAndModify command atomically modifies and returns a single document. By default, the returned document does not include the modifications made on the update. To return the document with the modifications made on the update, use the `new` option. See http://docs.mongodb.org/manual/reference/command/findAndModify/ for details:
+
+    {
+        "action": "find_and_modify",
+        "collection": <collection>,
+        "matcher": <document>,
+        "sort": <document>,
+        "remove": <boolean>,
+        "update": <document>,
+        "new": <boolean>,
+        "fields": <document>,
+        "upsert": <boolean>
+    }
+
+When the operation is successful a reply message is sent back to the sender with the relevant document:
+
+    {
+        "status": "ok",
+        "result": <document>
+    }
+
+Otherwise, it sends an error:
+
+    {
+        "status": "error",
+        "message": <string>
+    }
+
+An example would be:
+
+    {
+        "action": "find_and_modify",
+        "collection": "counters",
+        "matcher": { "_id": "people" },
+        "update": { "$inc": { "seq": 1 } },
+        "new": true
+    }
+
+This would find a document in the `counters` collection with an `_id` of "people" and increment its `seq` field and reply successfully with the new document, as `new` was set to true.
+
 ### Count
 
 Counts the number of documents within a collection:
