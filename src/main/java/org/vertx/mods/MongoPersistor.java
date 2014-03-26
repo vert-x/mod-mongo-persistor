@@ -145,7 +145,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "findone":
           doFindOne(message);
           break;
-        case "findAndModify":
+        // no need for a backwards compatible "findAndModify" since this feature was added after 
         case "find_and_modify":
           doFindAndModify(message);
           break;
@@ -406,27 +406,27 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
   }
   
   private void doFindAndModify(Message<JsonObject> message) {
-    String collection = getMandatoryString("collection", message);
-    if (collection == null) {
+    String collectionName = getMandatoryString("collection", message);
+    if (collectionName == null) {
       return;
-    }    
-    DBObject update = jsonToDBObject(getMandatoryObject("update", message));
+    }
     JsonObject msgBody = message.body();
-    DBObject query = jsonToDBObject(msgBody.getObject("matcher"));
-    DBObject sort = jsonToDBObject(msgBody.getObject("sort"));
-    DBObject fields = jsonToDBObject(msgBody.getObject("fields"));
+    DBObject update = jsonToDBObjectNullSafe(msgBody.getObject("update"));
+    DBObject query = jsonToDBObjectNullSafe(msgBody.getObject("matcher"));
+    DBObject sort = jsonToDBObjectNullSafe(msgBody.getObject("sort"));
+    DBObject fields = jsonToDBObjectNullSafe(msgBody.getObject("fields"));
     boolean remove = msgBody.getBoolean("remove", false);
     boolean returnNew = msgBody.getBoolean("new", false);
     boolean upsert = msgBody.getBoolean("upsert", false);
 
-    DBCollection coll = db.getCollection(collection);
-    DBObject result = coll.findAndModify(query, fields, sort, remove,
+    DBCollection collection = db.getCollection(collectionName);
+    DBObject result = collection.findAndModify(query, fields, sort, remove,
       update, returnNew, upsert);
 
     JsonObject reply = new JsonObject();
     if (result != null) {
-      JsonObject m = new JsonObject(result.toMap());
-      reply.putObject("result", m);
+      JsonObject resultJson = new JsonObject(result.toMap());
+      reply.putObject("result", resultJson);
     }
     sendOK(message, reply);
   }
@@ -532,8 +532,12 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     reply.putObject("result", new JsonObject(result.toMap()));
     sendOK(message, reply);
   }
-
+  
   private static DBObject jsonToDBObject(JsonObject object) {
+      return new BasicDBObject(object.toMap());
+  }  
+  
+  private static DBObject jsonToDBObjectNullSafe(JsonObject object) {
     if (object != null) {
       return new BasicDBObject(object.toMap());
     } else {

@@ -641,15 +641,15 @@ function testCollectionStats() {
 
 function testFindAndModify()
 {
-  var testDoc = { 'name': 'damian', 
-                  'age': 22
-                };
-  var famQuery = {  'collection': 'testcoll', 
-                    'action': 'findAndModify', 
-                    'matcher': {'name': testDoc.name},
-                    'update': { '$inc': { 'age': 1 } },
-                    'new': true
-                  };
+  // the document to test against 
+  var testDoc = { 'name': 'damian', 'age': 22 };
+  // the query to test
+  var testQuery = { 'collection': 'testcoll', 
+          'action': 'find_and_modify', 
+          'matcher': { 'name': testDoc.name },
+          'update': { '$inc': { 'age': 1 } },
+          'new': true
+  };
   
   // save a document in the db for this test 
   eb.send('test.persistor',
@@ -657,14 +657,14 @@ function testFindAndModify()
 		  incrementAgeByOne);
 
   function incrementAgeByOne(reply) {
-	// assert the `save` operation succeeded
+    // assert the `save` operation succeeded
     vassert.assertEquals('ok', reply.status);
     // perform the test findAndModify query
-    eb.send('test.persistor', famQuery, checkDocmentWasUpdated);
+    eb.send('test.persistor', testQuery, checkDocmentWasUpdated);
   }
 
   function checkDocmentWasUpdated(reply) {
-	// check the operation didn't cause an error
+    // check the operation didn't cause an error
     vassert.assertEquals('ok', reply.status);
     // check the updated document has been returned
     vassert.assertNotNull(reply.result);
