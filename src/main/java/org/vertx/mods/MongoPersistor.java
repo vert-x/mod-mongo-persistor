@@ -40,6 +40,9 @@ import java.util.UUID;
  */
 public class MongoPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 
+  private static final int MONGODB_PORT_DEFAULT = 27017;
+  private static final int POOL_SIZE_DEFAULT = 10;
+  private static final int SOCKET_TIMEOUT_DEFAULT = 60000;
   protected String address;
   protected String host;
   protected int port;
@@ -61,14 +64,14 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     address = getOptionalStringConfig("address", "vertx.mongopersistor");
 
     host = getOptionalStringConfig("host", "localhost");
-    port = getOptionalIntConfig("port", 27017);
+    port = getOptionalIntConfig("port", MONGODB_PORT_DEFAULT);
     dbName = getOptionalStringConfig("db_name", "default_db");
     username = getOptionalStringConfig("username", null);
     password = getOptionalStringConfig("password", null);
     readPreference = ReadPreference.valueOf(getOptionalStringConfig("read_preference", "primary"));
-    int poolSize = getOptionalIntConfig("pool_size", 10);
+    int poolSize = getOptionalIntConfig("pool_size", POOL_SIZE_DEFAULT);
     autoConnectRetry = getOptionalBooleanConfig("auto_connect_retry", true);
-    socketTimeout = getOptionalIntConfig("socket_timeout", 60000);
+    socketTimeout = getOptionalIntConfig("socket_timeout", SOCKET_TIMEOUT_DEFAULT);
     useSSL = getOptionalBooleanConfig("use_ssl", false);
 
     JsonArray seedsProperty = config.getArray("seeds");
@@ -148,7 +151,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "findone":
           doFindOne(message);
           break;
-        // no need for a backwards compatible "findAndModify" since this feature was added after 
+        // no need for a backwards compatible "findAndModify" since this feature was added after
         case "find_and_modify":
           doFindAndModify(message);
           break;
@@ -169,6 +172,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "collectionStats":
         case "collection_stats":
           getCollectionStats(message);
+          break;
+        case "aggregate":
+          doAggregation(message);
           break;
         case "command":
           runCommand(message);
@@ -407,7 +413,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     sendOK(message, reply);
   }
-  
+
   private void doFindAndModify(Message<JsonObject> message) {
     String collectionName = getMandatoryString("collection", message);
     if (collectionName == null) {
@@ -520,6 +526,52 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   }
 
+  private void doAggregation(Message<JsonObject> message) {
+    if (isCollectionMissing(message)) {
+        sendError(message,"collection is missing");
+        return;
+    }
+    if (isPipelinesMissing(message)) {
+        sendError(message,"no pipeline operations found");
+        return;
+    }
+    String collection = getMandatoryString("collection", message);
+    JsonArray pipelinesAsJson = message.body().getArray("pipelines");
+    List<DBObject> pipelines = jsonPipelinesToDbObjects(pipelinesAsJson);
+
+    DBCollection dbCollection = db.getCollection(collection);
+    // v2.11.1 of the driver has an inefficient method signature in terms
+    // of parameters, so we have to remove the first one
+    DBObject firstPipelineOp = pipelines.remove(0);
+    AggregationOutput aggregationOutput = dbCollection.aggregate(firstPipelineOp, pipelines.toArray(new DBObject[] {}));
+
+    JsonArray results = new JsonArray();
+    for (DBObject dbObject : aggregationOutput.results()) {
+        results.add(new JsonObject(dbObject.toMap()));
+    }
+
+    JsonObject reply = new JsonObject();
+    reply.putArray("results", results);
+    sendOK(message, reply);
+  }
+
+  private List<DBObject> jsonPipelinesToDbObjects(JsonArray pipelinesAsJson) {
+      List<DBObject> pipelines = new ArrayList<>();
+      for (Object pipeline : pipelinesAsJson) {
+          DBObject dbObject = jsonToDBObject((JsonObject) pipeline);
+          pipelines.add(dbObject);
+      }
+      return pipelines;
+  }
+
+    private boolean isCollectionMissing(Message<JsonObject> message) {
+      return getMandatoryString("collection", message) == null;
+  }
+
+  private boolean isPipelinesMissing(Message<JsonObject> message) {
+      return message.body().getArray("pipelines") == null || message.body().getArray("pipelines").size() == 0;
+  }
+
   private void runCommand(Message<JsonObject> message) {
     JsonObject reply = new JsonObject();
 
@@ -535,11 +587,11 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     reply.putObject("result", new JsonObject(result.toMap()));
     sendOK(message, reply);
   }
-  
+
   private static DBObject jsonToDBObject(JsonObject object) {
       return new BasicDBObject(object.toMap());
-  }  
-  
+  }
+
   private static DBObject jsonToDBObjectNullSafe(JsonObject object) {
     if (object != null) {
       return new BasicDBObject(object.toMap());
