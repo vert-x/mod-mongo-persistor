@@ -746,6 +746,22 @@ function testAggregate() {
     });
 }
 
+
+function testSinglePipelineAggregation() {
+    eb.send('test.persistor', {
+        collection: 'testcities',
+        action: 'aggregate',
+        pipelines: [{ $group : { _id : { state : "$state", city : "$city" }, pop : { $sum : "$pop" } } }]
+    }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertEquals(25701,reply.results.length,0);
+        var res = reply.results[0];
+        vassert.assertEquals('CHALKYITSIK', res._id.city);
+        vassert.assertEquals(99, res.pop,0);
+        vassert.testComplete();
+    });
+}
+
 function testBrokenAggregationNoPipelines() {
     eb.send('test.persistor', {
         collection: 'testcities',
