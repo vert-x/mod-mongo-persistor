@@ -23,10 +23,14 @@ The mongo-persistor module takes the following configuration:
         "address": <address>,
         "host": <host>,
         "port": <port>,
+        "username": <username>,
+        "password": <password>,
         "db_name": <db_name>,
         "pool_size": <pool_size>,
         "use_ssl": <bool>,
-        "read_preference": <e.g. "nearest" or "primary" etecetera>
+        "read_preference": <e.g. "nearest" or "primary" etcetera>,
+        "socket_timeout": <default 60000>,
+        "auto_connect_retry": <default true>
     }
 
 For example:
