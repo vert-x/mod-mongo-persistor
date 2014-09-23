@@ -695,7 +695,7 @@ function testAggregate() {
         }
     }, function (reply) {
         vassert.assertEquals('ok', reply.status);
-        if (typeof reply.result ==='undefined') {
+        if (typeof reply.result === 'undefined') {
             var data = vertx.fileSystem.readFileSync("src/test/resources/integration_tests/javascript/test_document.js");
             var cities = JSON.parse(data.getString(0, data.length()));
             populateCitiesCollection(cities);
@@ -707,35 +707,32 @@ function testAggregate() {
                 { $group: { _id: { state: "$state", city: "$city" }, pop: { $sum: "$pop" } } },
                 { $group: { _id: "$_id.state", avgCityPop: { $avg: "$pop" } } }
             ]
-        }, function(reply) {
+        }, function (reply) {
             vassert.assertEquals('ok', reply.status);
-            vassert.assertEquals(51,reply.results.length,0);
+            vassert.assertEquals(51, reply.results.length, 0);
             var res = reply.results[0];
             vassert.assertEquals('RI', res._id);
-            vassert.assertEquals(19292.653846153848, res.avgCityPop,6);
+            vassert.assertEquals(19292.653846153848, res.avgCityPop, 6);
             eb.send('test.persistor', {
                 collection: 'testcities',
                 action: 'aggregate',
                 pipelines: [
-                    { $group:
-                    { _id: { state: "$state", city: "$city" },
+                    { $group: { _id: { state: "$state", city: "$city" },
                         pop: { $sum: "$pop" } } },
                     { $sort: { pop: 1 } },
-                    { $group:
-                    { _id : "$_id.state",
-                        biggestCity:  { $last: "$_id.city" },
-                        biggestPop:   { $last: "$pop" },
+                    { $group: { _id: "$_id.state",
+                        biggestCity: { $last: "$_id.city" },
+                        biggestPop: { $last: "$pop" },
                         smallestCity: { $first: "$_id.city" },
-                        smallestPop:  { $first: "$pop" } } },
-                    { $project:
-                    { _id: 0,
+                        smallestPop: { $first: "$pop" } } },
+                    { $project: { _id: 0,
                         state: "$_id",
-                        biggestCity:  { name: "$biggestCity",  pop: "$biggestPop" },
+                        biggestCity: { name: "$biggestCity", pop: "$biggestPop" },
                         smallestCity: { name: "$smallestCity", pop: "$smallestPop" } } }
                 ]
-            }, function(reply) {
+            }, function (reply) {
                 vassert.assertEquals('ok', reply.status);
-                vassert.assertEquals(51,reply.results.length,0);
+                vassert.assertEquals(51, reply.results.length, 0);
                 var res = reply.results[0];
                 vassert.assertEquals('IN', res.state);
                 vassert.assertEquals('INDIANAPOLIS', res.biggestCity.name);
@@ -751,13 +748,15 @@ function testSinglePipelineAggregation() {
     eb.send('test.persistor', {
         collection: 'testcities',
         action: 'aggregate',
-        pipelines: [{ $group : { _id : { state : "$state", city : "$city" }, pop : { $sum : "$pop" } } }]
-    }, function(reply) {
+        pipelines: [
+            { $group: { _id: { state: "$state", city: "$city" }, pop: { $sum: "$pop" } } }
+        ]
+    }, function (reply) {
         vassert.assertEquals('ok', reply.status);
-        vassert.assertEquals(25701,reply.results.length,0);
+        vassert.assertEquals(25701, reply.results.length, 0);
         var res = reply.results[0];
         vassert.assertEquals('CHALKYITSIK', res._id.city);
-        vassert.assertEquals(99, res.pop,0);
+        vassert.assertEquals(99, res.pop, 0);
         vassert.testComplete();
     });
 }
@@ -767,7 +766,7 @@ function testBrokenAggregationNoPipelines() {
         collection: 'testcities',
         action: 'aggregate',
         pipelines: []
-    }, function(reply) {
+    }, function (reply) {
         vassert.assertEquals('error', reply.status);
         vassert.testComplete();
     });
@@ -777,7 +776,7 @@ function testBrokenAggregationNoPipelineField() {
     eb.send('test.persistor', {
         collection: 'testcities',
         action: 'aggregate'
-    }, function(reply) {
+    }, function (reply) {
         vassert.assertEquals('error', reply.status);
         vassert.testComplete();
     });
@@ -792,7 +791,7 @@ function testBrokenAggregationNonsenseData() {
             { $foo: { _id: { state: "$state", city: "$city" }, pop: { $sum: "$pop" } } },
             { $group: { _id: "$_id.state", avgCityPop: { $bar: "$pop" } } }
         ]
-    }, function(reply) {
+    }, function (reply) {
         vassert.assertEquals('error', reply.status);
         vassert.testComplete();
     });
