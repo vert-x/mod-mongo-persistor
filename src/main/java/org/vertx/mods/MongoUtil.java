@@ -41,7 +41,7 @@ public class MongoUtil {
             throw new IllegalArgumentException("Cannot convert empty string to DBObject");
         }
 
-        return  (DBObject) JSON.parse(json.toString());
+        return  (DBObject) JSON.parse(json);
     }
 
     /**
