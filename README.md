@@ -23,11 +23,15 @@ The mongo-persistor module takes the following configuration:
         "address": <address>,
         "host": <host>,
         "port": <port>,
+        "username": <username>,
+        "password": <password>,
         "db_name": <db_name>,
         "pool_size": <pool_size>,
         "use_ssl": <bool>,
         "read_preference": <e.g. "nearest" or "primary" etecetera>,
-        "use_mongo_types": <bool>
+        "use_mongo_types": <bool>,
+        "socket_timeout": <default 60000>,
+        "auto_connect_retry": <default true>
     }
 
 For example:
@@ -41,7 +45,7 @@ For example:
         "read_preference": "nearest",
         "use_mongo_types": false
     }
-    
+
 Let's take a look at each field in turn:
 
 * `address` The main address for the module. Every module has a main address. Defaults to `vertx.mongopersistor`.
@@ -84,8 +88,8 @@ To save a document send a JSON message to the module main address:
         "action": "save",
         "collection": <collection>,
         "document": <document>
-    }     
-    
+    }
+
 Where:
 * `collection` is the name of the MongoDB collection that you wish to save the document in. This field is mandatory.
 * `document` is the JSON document that you wish to save.
@@ -102,34 +106,34 @@ An example would be:
             "username": "tim",
             "password": "wibble"
         }
-    }  
-    
+    }
+
 When the save complete successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok"
     }
-    
+
 The reply will also contain a field `_id` if the document that was saved didn't specify an id, this will be an automatically generated UUID, for example:
 
     {
         "status": "ok"
         "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
     }
-     
-If you save a document which already possesses an `_id` field, and a document with the same id already exists in the database, then the document will be updated. 
- 
+
+If you save a document which already possesses an `_id` field, and a document with the same id already exists in the database, then the document will be updated.
+
 If an error occurs in saving the document a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-    
+
 Where
 * `message` is an error message.
 
-   
+
 ### Update
 
 Updates a document in the database.
@@ -148,7 +152,7 @@ To update a document send a JSON message to the module main address:
         },
         upsert : <upsert>
         multi: <multi>
-    }  
+    }
 
 Where:
  * `collection` is the name of the MongoDB collection that you wish to save the document in. This field is mandatory.
@@ -194,7 +198,7 @@ To find documents send a JSON message to the module main address:
         "hint": <index hint>,
         "batch_size": <batch_size>
     }
-    
+
 Where:
 * `collection` is the name of the MongoDB collection that you wish to search in in. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to find matching documents. This obeys the normal MongoDB matching rules.
@@ -214,17 +218,17 @@ An example would be:
         "matcher": {
             "item": "cheese"
         }
-    }  
-    
-This would return all orders where the `item` field has the value `cheese`. 
+    }
+
+This would return all orders where the `item` field has the value `cheese`.
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
 
     {
         "status": "ok",
         "results": <results>
-    }   
-    
+    }
+
 Where
 *`results` is a JSON array containing the results of the find operation. For example:
 
@@ -248,14 +252,14 @@ Where
             }
         ]
     }
-    
+
 If an error occurs in finding the documents a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-    
+
 Where
 *`message` is an error message.
 
@@ -307,11 +311,11 @@ For instance, in JavaScript you might do something like:
     eb.send('foo.myPersistor', {
         action: 'find',
         collection: 'items',
-        matcher: {}        
+        matcher: {}
     }, createReplyHandler());
-    
-If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.    
-    
+
+If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.
+
 
 ### Find One
 
@@ -324,8 +328,8 @@ To find a document send a JSON message to the module main address:
         "collection": <collection>,
         "matcher": <matcher>,
         "keys": <keys>
-    }     
-    
+    }
+
 Where:
 * `collection` is the name of the MongoDB collection that you wish to search in in. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to find a matching document. This obeys the normal MongoDB matching rules.
@@ -341,8 +345,8 @@ An example would be:
         "matcher": {
             "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
         }
-    }  
-    
+    }
+
 This would return the item with the specified id.
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
@@ -350,15 +354,15 @@ When the find complete successfully, a reply message is sent back to the sender 
     {
         "status": "ok",
         "result": <result>
-    }       
-    
+    }
+
 If an error occurs in finding the documents a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-    
+
 Where
 *`message` is an error message.
 
@@ -462,8 +466,8 @@ To delete documents send a JSON message to the module main address:
         "action": "delete",
         "collection": <collection>,
         "matcher": <matcher>
-    }     
-    
+    }
+
 Where:
 * `collection` is the name of the MongoDB collection that you wish to delete from. This field is mandatory.
 * `matcher` is a JSON object that you want to match against to delete matching documents. This obeys the normal MongoDB matching rules.
@@ -478,8 +482,8 @@ An example would be:
         "matcher": {
             "_id": "ffeef2a7-5658-4905-a37c-cfb19f70471d"
         }
-    }  
-    
+    }
+
 This would delete the item with the specified id.
 
 When the find complete successfully, a reply message is sent back to the sender with the following data:
@@ -487,18 +491,18 @@ When the find complete successfully, a reply message is sent back to the sender 
     {
         "status": "ok",
         "number": <number>
-    }       
-    
+    }
+
 Where
 *`number` is the number of documents deleted.
-    
+
 If an error occurs in finding the documents a reply is returned:
 
     {
         "status": "error",
         "message": <message>
     }
-    
+
 Where
 *`message` is an error message.
 
@@ -646,7 +650,7 @@ Where
 
 Runs an arbitrary MongoDB command.
 
-Command can be used to run more advanced MongoDB features, such as using Mapreduce. 
+Command can be used to run more advanced MongoDB features, such as using Mapreduce.
 There is a complete list of commands at http://docs.mongodb.org/manual/reference/command/.
 
 An example that just pings to make sure the mongo instance is up would be:
