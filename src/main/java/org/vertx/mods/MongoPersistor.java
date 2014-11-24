@@ -345,7 +345,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         JsonArray results = new JsonArray();
         while (cursor.hasNext() && count < max) {
             DBObject obj = cursor.next();
-            JsonObject m = new JsonObject(obj.toMap());
+            JsonObject m = dBObjectToJsonObject(obj);
             results.add(m);
             count++;
         }
@@ -542,7 +542,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
         JsonArray results = new JsonArray();
         for (DBObject dbObject : aggregationOutput.results()) {
-            results.add(new JsonObject(dbObject.toMap()));
+            results.add(dBObjectToJsonObject(dbObject));
         }
 
         JsonObject reply = new JsonObject();
@@ -585,6 +585,10 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
     private static DBObject jsonToDBObject(JsonObject object) {
         return new BasicDBObject(object.toMap());
+    }
+
+    private static JsonObject dBObjectToJsonObject(DBObject dbObject) {
+        return new JsonObject(JSON.serialize(dbObject));
     }
 
     private static DBObject jsonToDBObjectNullSafe(JsonObject object) {
