@@ -28,7 +28,8 @@ The mongo-persistor module takes the following configuration:
         "db_name": <db_name>,
         "pool_size": <pool_size>,
         "use_ssl": <bool>,
-        "read_preference": <e.g. "nearest" or "primary" etcetera>,
+        "read_preference": <e.g. "nearest" or "primary" etecetera>,
+        "use_mongo_types": <bool>,
         "socket_timeout": <default 60000>,
         "auto_connect_retry": <default true>
     }
@@ -41,7 +42,8 @@ For example:
         "port": 27000,
         "pool_size": 20,
         "db_name": "my_db",
-        "read_preference": "nearest"
+        "read_preference": "nearest",
+        "use_mongo_types": false
     }
 
 Let's take a look at each field in turn:
@@ -53,6 +55,7 @@ Let's take a look at each field in turn:
 * `pool_size` The number of socket connections the module instance should maintain to the MongoDB server. Default is 10.
 * `use_ssl` enable SSL based connections.  See http://docs.mongodb.org/manual/tutorial/configure-ssl/ for more details. Defaults to `false`.
 * `read_preference` is the read preferences, see http://docs.mongodb.org/manual/core/read-preference/. Default is "primary".
+* `use_mongo_types` enable the use of mongo types such as Date, byte array, array list. Note that if enabled this will incur a performance overhead to all queries. Default is `false`.
 
 ### Replsets or sharding
 

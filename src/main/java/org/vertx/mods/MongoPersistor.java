@@ -17,7 +17,6 @@
 package org.vertx.mods;
 
 import com.mongodb.*;
-import com.mongodb.util.JSON;
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
@@ -53,6 +52,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   protected Mongo mongo;
   protected DB db;
+  private boolean useMongoTypes;
 
   @Override
   public void start() {
@@ -70,6 +70,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     autoConnectRetry = getOptionalBooleanConfig("auto_connect_retry", true);
     socketTimeout = getOptionalIntConfig("socket_timeout", 60000);
     useSSL = getOptionalBooleanConfig("use_ssl", false);
+    useMongoTypes = getOptionalBooleanConfig("use_mongo_types", false);
 
     JsonArray seedsProperty = config.getArray("seeds");
 
@@ -147,7 +148,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "findone":
           doFindOne(message);
           break;
-        // no need for a backwards compatible "findAndModify" since this feature was added after 
+        // no need for a backwards compatible "findAndModify" since this feature was added after
         case "find_and_modify":
           doFindAndModify(message);
           break;
@@ -206,6 +207,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     if (writeConcern == null) {
       writeConcern = db.getWriteConcern();
     }
+
     WriteResult res = coll.save(obj, writeConcern);
     if (res.getError() == null) {
       if (genID != null) {
@@ -341,7 +343,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     JsonArray results = new JsonArray();
     while (cursor.hasNext() && count < max) {
       DBObject obj = cursor.next();
-      JsonObject m = new JsonObject(obj.toMap());
+      JsonObject m = dbObjectToJsonObject(obj);
       results.add(m);
       count++;
     }
@@ -406,7 +408,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     }
     sendOK(message, reply);
   }
-  
+
   private void doFindAndModify(Message<JsonObject> message) {
     String collectionName = getMandatoryString("collection", message);
     if (collectionName == null) {
@@ -427,7 +429,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
     JsonObject reply = new JsonObject();
     if (result != null) {
-      JsonObject resultJson = new JsonObject(result.toMap());
+      JsonObject resultJson = dbObjectToJsonObject(result);
       reply.putObject("result", resultJson);
     }
     sendOK(message, reply);
@@ -514,7 +516,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     CommandResult stats = coll.getStats();
 
     JsonObject reply = new JsonObject();
-    reply.putObject("stats", new JsonObject(stats.toMap()));
+    reply.putObject("stats", dbObjectToJsonObject(stats));
     sendOK(message, reply);
 
   }
@@ -528,20 +530,32 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
       return;
     }
 
-    DBObject commandObject = (DBObject) JSON.parse(command);
+    DBObject commandObject = MongoUtil.convertJsonToBson(command);
     CommandResult result = db.command(commandObject);
 
     reply.putObject("result", new JsonObject(result.toMap()));
     sendOK(message, reply);
   }
-  
-  private static DBObject jsonToDBObject(JsonObject object) {
+
+  private JsonObject dbObjectToJsonObject(DBObject obj) {
+    if (useMongoTypes) {
+      return MongoUtil.convertBsonToJson(obj);
+    } else {
+      return new JsonObject(obj.toMap());
+    }
+  }
+
+  private DBObject jsonToDBObject(JsonObject object) {
+    if (useMongoTypes) {
+      return MongoUtil.convertJsonToBson(object);
+    } else {
       return new BasicDBObject(object.toMap());
-  }  
-  
-  private static DBObject jsonToDBObjectNullSafe(JsonObject object) {
+    }
+  }
+
+  private DBObject jsonToDBObjectNullSafe(JsonObject object) {
     if (object != null) {
-      return new BasicDBObject(object.toMap());
+      return jsonToDBObject(object);
     } else {
       return null;
     }
