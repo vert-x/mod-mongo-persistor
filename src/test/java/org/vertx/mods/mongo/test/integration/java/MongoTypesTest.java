@@ -45,38 +45,19 @@ public class MongoTypesTest extends PersistorTestParent {
   }
 
   @Test
-  public void testCommand() throws Exception {
-    JsonObject ping = new JsonObject()
-            .putString("action", "command")
-            .putString("command", "{ping:1}");
-
-    eb.send(ADDRESS, ping, new Handler<Message<JsonObject>>() {
-      public void handle(Message<JsonObject> reply) {
-        Number ok = reply.body()
-                .getObject("result")
-                .getNumber("ok");
-
-        assertEquals(1.0, ok);
-        testComplete();
-      }
-    });
-  }
-
-
-  @Test
-  public void testDate() throws Exception {
+  public void validDatePersists() throws Exception {
     Date date = new Date();
     insertTypedData(date);
   }
 
   @Test
-  public void testByteArray() throws Exception {
+  public void validByteArrayPersists() throws Exception {
     byte[] data = new byte[]{1, 2, 3};
     insertTypedData(data);
   }
 
   @Test
-  public void testArrayList() throws Exception {
+  public void validArrayListPersists() throws Exception {
     List data = new ArrayList();
     data.add(1);
     data.add(2);
@@ -86,7 +67,7 @@ public class MongoTypesTest extends PersistorTestParent {
   }
 
   @Test
-  public void testEmbeddedDoc() throws Exception {
+  public void validEmbeddedDocPersists() throws Exception {
     BasicDBObject y = new BasicDBObject("y", 3);
     BasicDBObject data = new BasicDBObject("x", y);
     insertTypedData(data);

@@ -36,11 +36,11 @@ public abstract class PersistorTestParent extends TestVerticle {
     eb = vertx.eventBus();
     JsonObject config = getConfig();
     container.deployModule(System.getProperty("vertx.modulename"), config, 1, new AsyncResultHandler<String>() {
-      public void handle(AsyncResult<String> ar) {
-        if (ar.succeeded()) {
+      public void handle(AsyncResult<String> result) {
+        if (result.succeeded()) {
           PersistorTestParent.super.start();
         } else {
-          ar.cause().printStackTrace();
+          result.cause().printStackTrace();
         }
       }
     });
@@ -62,8 +62,6 @@ public abstract class PersistorTestParent extends TestVerticle {
     config.putBoolean("fake", false);
     return config;
   }
-
-  ;
 
   protected void deleteAll(Handler<Message<JsonObject>> handler) {
     JsonObject matcher = new JsonObject("{}");
