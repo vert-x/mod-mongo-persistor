@@ -170,6 +170,9 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
         case "collection_stats":
           getCollectionStats(message);
           break;
+        case "aggregate":
+          doAggregation(message);
+          break;
         case "command":
           runCommand(message);
           break;
@@ -481,7 +484,7 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
 
   private void getCollections(Message<JsonObject> message) {
     JsonObject reply = new JsonObject();
-    reply.putArray("collections", new JsonArray(db.getCollectionNames()
+      reply.putArray("collections", new JsonArray(db.getCollectionNames()
         .toArray()));
     sendOK(message, reply);
   }
@@ -519,6 +522,52 @@ public class MongoPersistor extends BusModBase implements Handler<Message<JsonOb
     reply.putObject("stats", dbObjectToJsonObject(stats));
     sendOK(message, reply);
 
+  }
+
+  private void doAggregation(Message<JsonObject> message) {
+    if (isCollectionMissing(message)) {
+      sendError(message, "collection is missing");
+      return;
+    }
+    if (isPipelinesMissing(message.body().getArray("pipelines"))) {
+      sendError(message, "no pipeline operations found");
+      return;
+    }
+    String collection = getMandatoryString("collection", message);
+    JsonArray pipelinesAsJson = message.body().getArray("pipelines");
+    List<DBObject> pipelines = jsonPipelinesToDbObjects(pipelinesAsJson);
+
+    DBCollection dbCollection = db.getCollection(collection);
+    // v2.11.1 of the driver has an inefficient method signature in terms
+    // of parameters, so we have to remove the first one
+    DBObject firstPipelineOp = pipelines.remove(0);
+    AggregationOutput aggregationOutput = dbCollection.aggregate(firstPipelineOp, pipelines.toArray(new DBObject[] {}));
+
+    JsonArray results = new JsonArray();
+    for (DBObject dbObject : aggregationOutput.results()) {
+      results.add(dbObjectToJsonObject(dbObject));
+    }
+
+    JsonObject reply = new JsonObject();
+    reply.putArray("results", results);
+    sendOK(message, reply);
+  }
+
+  private List<DBObject> jsonPipelinesToDbObjects(JsonArray pipelinesAsJson) {
+    List<DBObject> pipelines = new ArrayList<>();
+    for (Object pipeline : pipelinesAsJson) {
+      DBObject dbObject = jsonToDBObject((JsonObject) pipeline);
+      pipelines.add(dbObject);
+    }
+    return pipelines;
+  }
+
+  private boolean isCollectionMissing(Message<JsonObject> message) {
+    return getMandatoryString("collection", message) == null;
+  }
+
+  private boolean isPipelinesMissing(JsonArray pipelines) {
+    return pipelines == null || pipelines.size() == 0;
   }
 
   private void runCommand(Message<JsonObject> message) {
