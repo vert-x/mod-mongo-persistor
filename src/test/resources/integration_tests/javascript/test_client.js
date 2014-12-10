@@ -39,7 +39,7 @@ if (username != null) {
 }
 
 var script = this;
-container.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function (err, deployID) {
+container.deployModule(java.lang.System.getProperty('vertx.modulename'), persistorConfig, 1, function(err, deployID){
   if (err != null) {
     err.printStackTrace();
   } else {
@@ -47,14 +47,14 @@ container.deployModule(java.lang.System.getProperty('vertx.modulename'), persist
       collection: 'testcoll',
       action: 'delete',
       matcher: {}
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vertxTests.startTests(script);
     });
   }
 });
 
-function testSave() {
+function testSave(){
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'save',
@@ -65,7 +65,7 @@ function testSave() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     var id = reply._id;
     vassert.assertTrue(id != undefined);
@@ -79,7 +79,7 @@ function testSave() {
         name: 'tim',
         age: 1000
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
 
       eb.send('test.persistor', {
@@ -88,7 +88,7 @@ function testSave() {
         document: {
           _id: id
         }
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         vassert.assertEquals('tim', reply.result.name);
         vassert.assertEquals(1000, reply.result.age, 0);
@@ -103,7 +103,7 @@ function testSave() {
             name: 'fox',
             age: 21
           }
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           eb.send('test.persistor', {
             collection: 'testcoll',
@@ -111,7 +111,7 @@ function testSave() {
             document: {
               _id: id
             }
-          }, function (reply) {
+          }, function(reply){
             vassert.assertEquals('ok', reply.status);
             vassert.assertEquals('fox', reply.result.name);
             vassert.assertEquals(21, reply.result.age, 0);
@@ -124,7 +124,7 @@ function testSave() {
   });
 }
 
-function testFind() {
+function testFind(){
 
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -136,7 +136,7 @@ function testFind() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -144,7 +144,7 @@ function testFind() {
       matcher: {
         name: 'tim'
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals(1, reply.results.length, 0);
       var res = reply.results[0];
@@ -161,7 +161,7 @@ function testFind() {
   });
 }
 
-function testFindNoMatcher() {
+function testFindNoMatcher(){
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'save',
@@ -172,12 +172,12 @@ function testFindNoMatcher() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
       action: 'find'
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals(1, reply.results.length, 0);
       var res = reply.results[0];
@@ -194,7 +194,7 @@ function testFindNoMatcher() {
   });
 }
 
-function testFindOne() {
+function testFindOne(){
 
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -206,7 +206,7 @@ function testFindOne() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -214,7 +214,7 @@ function testFindOne() {
       matcher: {
         name: 'tim'
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       var res = reply.result;
       vassert.assertEquals('tim', res.name);
@@ -230,7 +230,7 @@ function testFindOne() {
   });
 }
 
-function testFindWithLimit() {
+function testFindWithLimit(){
 
   var num = 20;
 
@@ -245,7 +245,7 @@ function testFindWithLimit() {
       document: {
         name: 'tim' + i
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
 
       if (++count == num) {
@@ -254,7 +254,7 @@ function testFindWithLimit() {
           action: 'find',
           limit: limit,
           matcher: {}
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           vassert.assertEquals(limit, reply.results.length, 0);
           vassert.testComplete();
@@ -266,7 +266,7 @@ function testFindWithLimit() {
 
 }
 
-function testFindWithSkipAndLimit() {
+function testFindWithSkipAndLimit(){
 
   var num = 20;
 
@@ -282,7 +282,7 @@ function testFindWithSkipAndLimit() {
       document: {
         name: 'tim' + i
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
 
       if (++count == num) {
@@ -292,7 +292,7 @@ function testFindWithSkipAndLimit() {
           skip: skip,
           limit: limit,
           matcher: {}
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           vassert.assertEquals(10, reply.results.length, 0);
           vassert.testComplete();
@@ -302,7 +302,7 @@ function testFindWithSkipAndLimit() {
   }
 }
 
-function testFindWithSort() {
+function testFindWithSort(){
 
   if (!isFake) {
 
@@ -319,17 +319,17 @@ function testFindWithSort() {
           name: 'tim',
           age: Math.floor(Math.random() * 11)
         }
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
 
         if (++count == num) {
-          vertx.setTimer(1000, function () {
+          vertx.setTimer(1000, function(){
             eb.send('test.persistor', {
               collection: 'testcoll',
               action: 'find',
               matcher: {},
               sort: {age: 1}
-            }, function (reply) {
+            }, function(reply){
               vassert.assertEquals('ok', reply.status);
               vassert.assertEquals(num, reply.results.length, 0);
               var last = 0;
@@ -350,7 +350,7 @@ function testFindWithSort() {
   }
 }
 
-function testFindWithKeys() {
+function testFindWithKeys(){
 
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -359,14 +359,14 @@ function testFindWithKeys() {
       name: 'tim',
       age: Math.floor(Math.random() * 11)
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
       action: 'findone',
       keys: {name: 1},
       sort: {age: 1}
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals('tim', reply.result.name);
 
@@ -376,7 +376,7 @@ function testFindWithKeys() {
         matcher: {name: 'tim'},
         keys: {name: 1},
         sort: {age: 1}
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         vassert.assertEquals('tim', reply.result.name);
 
@@ -386,7 +386,7 @@ function testFindWithKeys() {
           matcher: {name: 'tim'},
           keys: {name: 1},
           sort: {age: 1}
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           vassert.assertEquals('tim', reply.results[0].name);
           vassert.testComplete();
@@ -397,7 +397,7 @@ function testFindWithKeys() {
 }
 
 
-function testFindBatched() {
+function testFindBatched(){
 
   var num = 103;
   var count = 0;
@@ -410,14 +410,14 @@ function testFindBatched() {
         name: 'tim',
         age: i
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
 
       if (++count == num) {
         var received = 0;
 
-        function createReplyHandler() {
-          return function (reply, replier) {
+        function createReplyHandler(){
+          return function(reply, replier){
             received += reply.results.length;
             if (received < num) {
               vassert.assertEquals(10, reply.results.length, 0);
@@ -445,7 +445,7 @@ function testFindBatched() {
 
 }
 
-function testDelete() {
+function testDelete(){
 
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -453,7 +453,7 @@ function testDelete() {
     document: {
       name: 'tim'
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -461,7 +461,7 @@ function testDelete() {
       document: {
         name: 'bob'
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       // Testing insert with writeConcern
       eb.send('test.persistor', {
@@ -471,7 +471,7 @@ function testDelete() {
         document: {
           name: 'mark'
         }
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         // Testing delete with writeConcern
         eb.send('test.persistor', {
@@ -481,7 +481,7 @@ function testDelete() {
           matcher: {
             name: 'mark'
           }
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           eb.send('test.persistor', {
             collection: 'testcoll',
@@ -489,7 +489,7 @@ function testDelete() {
             matcher: {
               name: 'tim'
             }
-          }, function (reply) {
+          }, function(reply){
 
             vassert.assertEquals('ok', reply.status);
             vassert.assertEquals(1, reply.number, 0);
@@ -500,7 +500,7 @@ function testDelete() {
               matcher: {
                 name: 'bob'
               }
-            }, function (reply) {
+            }, function(reply){
               vassert.assertEquals('ok', reply.status);
               vassert.assertEquals(1, reply.results.length, 0);
               vassert.testComplete();
@@ -512,7 +512,7 @@ function testDelete() {
   });
 }
 
-function testDropCollection() {
+function testDropCollection(){
 
   eb.send('test.persistor', {
     collection: 'testcoll',
@@ -524,7 +524,7 @@ function testDropCollection() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -532,7 +532,7 @@ function testDropCollection() {
       matcher: {
         name: 'tim'
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals(1, reply.results.length, 0);
       var res = reply.results[0];
@@ -546,11 +546,11 @@ function testDropCollection() {
       eb.send('test.persistor', {
         action: "dropCollection",
         collection: 'testcoll'
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         eb.send('test.persistor', {
           action: 'getCollections'
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           var collList = reply.collections;
           for (var i = 0; i < collList.length; i++) {
@@ -563,7 +563,7 @@ function testDropCollection() {
   });
 }
 
-function testCount() {
+function testCount(){
 
   var num = 10;
   var count = 0;
@@ -576,14 +576,14 @@ function testCount() {
         name: 'tim',
         age: Math.floor(Math.random() * 11)
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       if (++count == num) {
         eb.send('test.persistor', {
           collection: 'testcoll',
           action: 'count',
           matcher: {}
-        }, function (reply) {
+        }, function(reply){
           vassert.assertEquals('ok', reply.status);
           vassert.assertEquals(num, reply.count, 0);
           vassert.testComplete();
@@ -593,7 +593,7 @@ function testCount() {
   }
 }
 
-function testCollectionStats() {
+function testCollectionStats(){
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'save',
@@ -604,7 +604,7 @@ function testCollectionStats() {
       male: true,
       cheeses: ['brie', 'stilton']
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
@@ -612,7 +612,7 @@ function testCollectionStats() {
       matcher: {
         name: 'tim'
       }
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals(1, reply.results.length, 0);
       var res = reply.results[0];
@@ -627,7 +627,7 @@ function testCollectionStats() {
       eb.send('test.persistor', {
         collection: 'testcoll',
         action: 'collectionStats'
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         var stats = reply.stats;
         vassert.assertTrue(stats.serverUsed.length > 0)
@@ -639,7 +639,7 @@ function testCollectionStats() {
   });
 }
 
-function testFindAndModify() {
+function testFindAndModify(){
   // the document to test against
   var testDoc = {'name': 'damian', 'age': 22};
   // the query to test
@@ -656,14 +656,14 @@ function testFindAndModify() {
     {'action': 'save', 'collection': 'testcoll', 'document': testDoc},
     incrementAgeByOne);
 
-  function incrementAgeByOne(reply) {
+  function incrementAgeByOne(reply){
     // assert the `save` operation succeeded
     vassert.assertEquals('ok', reply.status);
     // perform the test findAndModify query
     eb.send('test.persistor', testQuery, checkDocmentWasUpdated);
   }
 
-  function checkDocmentWasUpdated(reply) {
+  function checkDocmentWasUpdated(reply){
     // check the operation didn't cause an error
     vassert.assertEquals('ok', reply.status);
     // check the updated document has been returned
@@ -674,15 +674,15 @@ function testFindAndModify() {
   }
 }
 
-function testAggregate() {
+function testAggregate(){
 
-  function populateCitiesCollection(cities) {
-    cities.forEach(function (element, index, array) {
+  function populateCitiesCollection(cities){
+    cities.forEach(function(element, index, array){
       eb.send('test.persistor', {
         collection: 'testcities',
         action: 'save',
         document: element
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
       });
     });
@@ -694,7 +694,7 @@ function testAggregate() {
     matcher: {
       city: 'THORNE BAY'
     }
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     if (typeof reply.result === 'undefined') {
       var data = vertx.fileSystem.readFileSync("src/test/resources/integration_tests/javascript/test_document.js");
@@ -708,7 +708,7 @@ function testAggregate() {
         {$group: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}},
         {$group: {_id: "$_id.state", avgCityPop: {$avg: "$pop"}}}
       ]
-    }, function (reply) {
+    }, function(reply){
       vassert.assertEquals('ok', reply.status);
       vassert.assertEquals(51, reply.results.length, 0);
       var res = reply.results[0];
@@ -743,7 +743,7 @@ function testAggregate() {
             }
           }
         ]
-      }, function (reply) {
+      }, function(reply){
         vassert.assertEquals('ok', reply.status);
         vassert.assertEquals(51, reply.results.length, 0);
         var res = reply.results[0];
@@ -757,14 +757,14 @@ function testAggregate() {
 }
 
 
-function testSinglePipelineAggregation() {
+function testSinglePipelineAggregation(){
   eb.send('test.persistor', {
     collection: 'testcities',
     action: 'aggregate',
     pipelines: [
       {$group: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}}, {$sort: {pop: -1}}
     ]
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('ok', reply.status);
     vassert.assertEquals(25701, reply.results.length, 0);
     var res = reply.results[0];
@@ -774,29 +774,29 @@ function testSinglePipelineAggregation() {
   });
 }
 
-function testBrokenAggregationNoPipelines() {
+function testBrokenAggregationNoPipelines(){
   eb.send('test.persistor', {
     collection: 'testcities',
     action: 'aggregate',
     pipelines: []
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('error', reply.status);
     vassert.testComplete();
   });
 }
 
-function testBrokenAggregationNoPipelineField() {
+function testBrokenAggregationNoPipelineField(){
   eb.send('test.persistor', {
     collection: 'testcities',
     action: 'aggregate'
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('error', reply.status);
     vassert.testComplete();
   });
 }
 
 
-function testBrokenAggregationNonsenseData() {
+function testBrokenAggregationNonsenseData(){
   eb.send('test.persistor', {
     collection: 'testcities',
     action: 'aggregate',
@@ -804,7 +804,7 @@ function testBrokenAggregationNonsenseData() {
       {$foo: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}},
       {$group: {_id: "$_id.state", avgCityPop: {$bar: "$pop"}}}
     ]
-  }, function (reply) {
+  }, function(reply){
     vassert.assertEquals('error', reply.status);
     vassert.testComplete();
   });
