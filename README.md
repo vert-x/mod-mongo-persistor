@@ -506,6 +506,56 @@ If an error occurs in finding the documents a reply is returned:
 Where
 *`message` is an error message.
 
+### Aggregate
+
+Executes aggregation pipeline(s) in the database.
+
+To run an aggregation send a JSON message to the module main address:
+
+    {
+        "action": "aggregate",
+        "collection": <collection>,
+        pipelines: [
+            <pipeline_1>,
+            <pipeline_2>,
+            <pipeline_N>,
+        ]
+    }     
+    
+Where:
+* `collection` is the name of the MongoDB collection that you wish to aggregate in. This field is mandatory.
+* `pipelines` is a JSON array that composes your aggregation pipeline(s). This field is mandatory and obeys the normal MongoDB aggregation rules.
+
+An example would be:
+
+    {
+        "action": "aggregate",
+        "collection": "testcities",
+        pipelines: [
+            { $group: { _id: { state: "$state", city: "$city" }, pop: { $sum: "$pop" } } },
+            { $group: { _id: "$_id.state", avgCityPop: { $avg: "$pop" } } }
+        ]
+    }  
+    
+That would return the average populations for cities in each state
+
+When the aggregation completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "result": <result>
+    }       
+    
+If an error occurs in finding the documents a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+*`message` is an error message.
+
 ### Get Collections List
 
 Returns the list of collection names in the db:
@@ -645,6 +695,7 @@ If an error occurs in finding the documents a reply is returned:
 
 Where
 * `message` is an error message.
+
 
 ### Command
 

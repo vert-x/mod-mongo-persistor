@@ -67,7 +67,7 @@ function testSave() {
     }
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
-    var id  = reply._id;
+    var id = reply._id;
     vassert.assertTrue(id != undefined);
 
     // Now update it
@@ -317,7 +317,7 @@ function testFindWithSort() {
         action: 'save',
         document: {
           name: 'tim',
-          age: Math.floor(Math.random()*11)
+          age: Math.floor(Math.random() * 11)
         }
       }, function(reply) {
         vassert.assertEquals('ok', reply.status);
@@ -351,20 +351,20 @@ function testFindWithSort() {
 }
 
 function testFindWithKeys() {
-	
+
   eb.send('test.persistor', {
     collection: 'testcoll',
     action: 'save',
     document: {
       name: 'tim',
-      age: Math.floor(Math.random()*11)
+      age: Math.floor(Math.random() * 11)
     }
   }, function(reply) {
     vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
       collection: 'testcoll',
       action: 'findone',
-      keys: { name: 1},
+      keys: {name: 1},
       sort: {age: 1}
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
@@ -374,7 +374,7 @@ function testFindWithKeys() {
         collection: 'testcoll',
         action: 'findone',
         matcher: {name: 'tim'},
-        keys: { name: 1},
+        keys: {name: 1},
         sort: {age: 1}
       }, function(reply) {
         vassert.assertEquals('ok', reply.status);
@@ -384,7 +384,7 @@ function testFindWithKeys() {
           collection: 'testcoll',
           action: 'find',
           matcher: {name: 'tim'},
-          keys: { name: 1},
+          keys: {name: 1},
           sort: {age: 1}
         }, function(reply) {
           vassert.assertEquals('ok', reply.status);
@@ -514,53 +514,53 @@ function testDelete() {
 
 function testDropCollection() {
 
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'save',
+    document: {
+      name: 'tim',
+      age: 40,
+      pi: 3.14159,
+      male: true,
+      cheeses: ['brie', 'stilton']
+    }
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
-        collection: 'testcoll',
-        action: 'save',
-        document: {
-            name: 'tim',
-            age: 40,
-            pi: 3.14159,
-            male: true,
-            cheeses: ['brie', 'stilton']
-        }
+      collection: 'testcoll',
+      action: 'find',
+      matcher: {
+        name: 'tim'
+      }
     }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(1, reply.results.length, 0);
+      var res = reply.results[0];
+      vassert.assertEquals('tim', res.name);
+      vassert.assertEquals(40, res.age, 0);
+      vassert.assertEquals(3.14159, res.pi, 0);
+      vassert.assertEquals(true, res.male);
+      vassert.assertEquals(2, res.cheeses.length, 0);
+      vassert.assertEquals('brie', res.cheeses[0]);
+      vassert.assertEquals('stilton', res.cheeses[1]);
+      eb.send('test.persistor', {
+        action: "dropCollection",
+        collection: 'testcoll'
+      }, function(reply) {
         vassert.assertEquals('ok', reply.status);
         eb.send('test.persistor', {
-            collection: 'testcoll',
-            action: 'find',
-            matcher: {
-                name: 'tim'
-            }
+          action: 'getCollections'
         }, function(reply) {
-            vassert.assertEquals('ok', reply.status);
-            vassert.assertEquals(1, reply.results.length, 0);
-            var res = reply.results[0];
-            vassert.assertEquals('tim', res.name);
-            vassert.assertEquals(40, res.age, 0);
-            vassert.assertEquals(3.14159, res.pi, 0);
-            vassert.assertEquals(true, res.male);
-            vassert.assertEquals(2, res.cheeses.length, 0);
-            vassert.assertEquals('brie', res.cheeses[0]);
-            vassert.assertEquals('stilton', res.cheeses[1]);
-            eb.send('test.persistor', {
-                action: "dropCollection",
-                collection: 'testcoll'
-            }, function(reply) {
-                vassert.assertEquals('ok', reply.status);
-                eb.send('test.persistor', {
-                    action: 'getCollections'
-                }, function(reply) {
-                    vassert.assertEquals('ok', reply.status);
-                    var collList = reply.collections;
-                    for (var i = 0; i < collList.length; i++) {
-                        vassert.assertTrue(collList[i] != "testcoll")
-                    }
-                    vassert.testComplete();
-                });
-            });
+          vassert.assertEquals('ok', reply.status);
+          var collList = reply.collections;
+          for (var i = 0; i < collList.length; i++) {
+            vassert.assertTrue(collList[i] != "testcoll")
+          }
+          vassert.testComplete();
         });
+      });
     });
+  });
 }
 
 function testCount() {
@@ -574,7 +574,7 @@ function testCount() {
       action: 'save',
       document: {
         name: 'tim',
-        age: Math.floor(Math.random()*11)
+        age: Math.floor(Math.random() * 11)
       }
     }, function(reply) {
       vassert.assertEquals('ok', reply.status);
@@ -594,67 +594,67 @@ function testCount() {
 }
 
 function testCollectionStats() {
+  eb.send('test.persistor', {
+    collection: 'testcoll',
+    action: 'save',
+    document: {
+      name: 'tim',
+      age: 40,
+      pi: 3.14159,
+      male: true,
+      cheeses: ['brie', 'stilton']
+    }
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
     eb.send('test.persistor', {
-        collection: 'testcoll',
-        action: 'save',
-        document: {
-            name: 'tim',
-            age: 40,
-            pi: 3.14159,
-            male: true,
-            cheeses: ['brie', 'stilton']
-        }
+      collection: 'testcoll',
+      action: 'find',
+      matcher: {
+        name: 'tim'
+      }
     }, function(reply) {
-        vassert.assertEquals('ok', reply.status);
-        eb.send('test.persistor', {
-            collection: 'testcoll',
-            action: 'find',
-            matcher: {
-                name: 'tim'
-            }
-        }, function(reply) {
-            vassert.assertEquals('ok', reply.status);
-            vassert.assertEquals(1, reply.results.length, 0);
-            var res = reply.results[0];
-            vassert.assertEquals('tim', res.name);
-            vassert.assertEquals(40, res.age, 0);
-            vassert.assertEquals(3.14159, res.pi, 0);
-            vassert.assertEquals(true, res.male);
-            vassert.assertEquals(2, res.cheeses.length, 0);
-            vassert.assertEquals('brie', res.cheeses[0]);
-            vassert.assertEquals('stilton', res.cheeses[1]);
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(1, reply.results.length, 0);
+      var res = reply.results[0];
+      vassert.assertEquals('tim', res.name);
+      vassert.assertEquals(40, res.age, 0);
+      vassert.assertEquals(3.14159, res.pi, 0);
+      vassert.assertEquals(true, res.male);
+      vassert.assertEquals(2, res.cheeses.length, 0);
+      vassert.assertEquals('brie', res.cheeses[0]);
+      vassert.assertEquals('stilton', res.cheeses[1]);
 
-            eb.send('test.persistor', {
-                collection: 'testcoll',
-                action: 'collectionStats'
-            }, function(reply) {
-                vassert.assertEquals('ok', reply.status);
-                var stats = reply.stats;
-                vassert.assertTrue(stats.serverUsed.length > 0)
-                vassert.assertEquals('testcoll', stats.ns.slice(-"testcoll".length))
-                vassert.assertEquals(1, stats.count, 0)
-                vassert.testComplete();
-            });
-        });
+      eb.send('test.persistor', {
+        collection: 'testcoll',
+        action: 'collectionStats'
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        var stats = reply.stats;
+        vassert.assertTrue(stats.serverUsed.length > 0)
+        vassert.assertEquals('testcoll', stats.ns.slice(-"testcoll".length))
+        vassert.assertEquals(1, stats.count, 0)
+        vassert.testComplete();
+      });
     });
+  });
 }
 
-function testFindAndModify()
-{
-  // the document to test against 
-  var testDoc = { 'name': 'damian', 'age': 22 };
+function testFindAndModify() {
+  // the document to test against
+  var testDoc = {'name': 'damian', 'age': 22};
   // the query to test
-  var testQuery = { 'collection': 'testcoll', 
-          'action': 'find_and_modify', 
-          'matcher': { 'name': testDoc.name },
-          'update': { '$inc': { 'age': 1 } },
-          'new': true
+  var testQuery = {
+    'collection': 'testcoll',
+    'action': 'find_and_modify',
+    'matcher': {'name': testDoc.name},
+    'update': {'$inc': {'age': 1}},
+    'new': true
   };
-  
-  // save a document in the db for this test 
+
+  // save a document in the db for this test
   eb.send('test.persistor',
-		  { 'action': 'save', 'collection': 'testcoll', 'document': testDoc }, 
-		  incrementAgeByOne);
+    {'action': 'save', 'collection': 'testcoll', 'document': testDoc},
+    incrementAgeByOne);
 
   function incrementAgeByOne(reply) {
     // assert the `save` operation succeeded
@@ -672,4 +672,140 @@ function testFindAndModify()
     vassert.assertEquals(testDoc.age + 1, reply.result.age, 0);
     vassert.testComplete();
   }
+}
+
+function testAggregate() {
+
+  function populateCitiesCollection(cities) {
+    cities.forEach(function(element, index, array) {
+      eb.send('test.persistor', {
+        collection: 'testcities',
+        action: 'save',
+        document: element
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+      });
+    });
+  }
+
+  eb.send('test.persistor', {
+    collection: 'testcities',
+    action: 'findone',
+    matcher: {
+      city: 'THORNE BAY'
+    }
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
+    if (typeof reply.result === 'undefined') {
+      var data = vertx.fileSystem.readFileSync("src/test/resources/integration_tests/javascript/test_document.js");
+      var cities = JSON.parse(data.getString(0, data.length()));
+      populateCitiesCollection(cities);
+    }
+    eb.send('test.persistor', {
+      collection: 'testcities',
+      action: 'aggregate',
+      pipelines: [
+        {$group: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}},
+        {$group: {_id: "$_id.state", avgCityPop: {$avg: "$pop"}}}
+      ]
+    }, function(reply) {
+      vassert.assertEquals('ok', reply.status);
+      vassert.assertEquals(51, reply.results.length, 0);
+      var res = reply.results[0];
+      vassert.assertEquals('RI', res._id);
+      vassert.assertEquals(19292.653846153848, res.avgCityPop, 6);
+      eb.send('test.persistor', {
+        collection: 'testcities',
+        action: 'aggregate',
+        pipelines: [
+          {
+            $group: {
+              _id: {state: "$state", city: "$city"},
+              pop: {$sum: "$pop"}
+            }
+          },
+          {$sort: {pop: 1}},
+          {
+            $group: {
+              _id: "$_id.state",
+              biggestCity: {$last: "$_id.city"},
+              biggestPop: {$last: "$pop"},
+              smallestCity: {$first: "$_id.city"},
+              smallestPop: {$first: "$pop"}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              state: "$_id",
+              biggestCity: {name: "$biggestCity", pop: "$biggestPop"},
+              smallestCity: {name: "$smallestCity", pop: "$smallestPop"}
+            }
+          }
+        ]
+      }, function(reply) {
+        vassert.assertEquals('ok', reply.status);
+        vassert.assertEquals(51, reply.results.length, 0);
+        var res = reply.results[0];
+        vassert.assertEquals('IN', res.state);
+        vassert.assertEquals('INDIANAPOLIS', res.biggestCity.name);
+        vassert.assertEquals('WESTPOINT', res.smallestCity.name);
+        vassert.testComplete();
+      });
+    });
+  });
+}
+
+
+function testSinglePipelineAggregation() {
+  eb.send('test.persistor', {
+    collection: 'testcities',
+    action: 'aggregate',
+    pipelines: [
+      {$group: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}}, {$sort: {pop: -1}}
+    ]
+  }, function(reply) {
+    vassert.assertEquals('ok', reply.status);
+    vassert.assertEquals(25701, reply.results.length, 0);
+    var res = reply.results[0];
+    vassert.assertEquals('CHICAGO', res._id.city);
+    vassert.assertEquals(2452177, res.pop, 0);
+    vassert.testComplete();
+  });
+}
+
+function testBrokenAggregationNoPipelines() {
+  eb.send('test.persistor', {
+    collection: 'testcities',
+    action: 'aggregate',
+    pipelines: []
+  }, function(reply) {
+    vassert.assertEquals('error', reply.status);
+    vassert.testComplete();
+  });
+}
+
+function testBrokenAggregationNoPipelineField() {
+  eb.send('test.persistor', {
+    collection: 'testcities',
+    action: 'aggregate'
+  }, function(reply) {
+    vassert.assertEquals('error', reply.status);
+    vassert.testComplete();
+  });
+}
+
+
+function testBrokenAggregationNonsenseData() {
+  eb.send('test.persistor', {
+    collection: 'testcities',
+    action: 'aggregate',
+    pipelines: [
+      {$foo: {_id: {state: "$state", city: "$city"}, pop: {$sum: "$pop"}}},
+      {$group: {_id: "$_id.state", avgCityPop: {$bar: "$pop"}}}
+    ]
+  }, function(reply) {
+    vassert.assertEquals('error', reply.status);
+    vassert.testComplete();
+  });
 }
