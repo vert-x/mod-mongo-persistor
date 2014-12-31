@@ -73,61 +73,120 @@ public class MongoTypesTest extends PersistorTestParent {
     insertTypedData(data);
   }
 
+  @Test
+  public void regexQueryWorks() throws Exception {
+    deleteAll(new Handler<Message<JsonObject>>() {
+      public void handle(Message<JsonObject> reply) {
+        final String testValue = "{\"testKey\" : \"testValue\"}";
+
+        JsonObject data = new JsonObject()
+                .putObject("data", new JsonObject(testValue));
+
+        JsonObject json = createSaveQuery(data);
+        final DBObject dataDb = MongoUtil.convertJsonToBson(data);
+
+        JsonObject matcher = new JsonObject()
+                .putObject("data.testKey", new JsonObject()
+                        .putString("$regex", ".*estValu.*"));
+
+        JsonObject query = createMatcher(matcher);
+
+
+        eb.send(ADDRESS, json, assertStored(query, dataDb, data));
+      }
+    });
+  }
+
+  @Test
+  public void elemMatchQueryWorks() throws Exception {
+    deleteAll(new Handler<Message<JsonObject>>() {
+      public void handle(Message<JsonObject> reply) {
+
+        List data = new ArrayList();
+        data.add(1);
+        data.add(2);
+        data.add(4);
+
+        final DBObject testValueDb = new BasicDBObject();
+        testValueDb.put("data", data);
+        JsonObject document = MongoUtil.convertBsonToJson(testValueDb);
+        JsonObject json = createSaveQuery(document);
+        final DBObject dataDb = MongoUtil.convertJsonToBson(document);
+
+        JsonObject matcher = new JsonObject()
+                .putObject("data", new JsonObject()
+                        .putObject("$elemMatch", new JsonObject()
+                                .putNumber("$gte", 0)
+                                .putNumber("$lt", 5)));
+
+        JsonObject query = createMatcher(matcher);
+
+
+        eb.send(ADDRESS, json, assertStored(query, dataDb, data));
+      }
+    });
+  }
+
   private void insertTypedData(final Object data) {
     deleteAll(new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
         final String testValue = "{\"testKey\" : \"testValue\"}";
-        final DBObject obj = MongoUtil.convertJsonToBson(testValue);
-        obj.put("data", data);
+        final DBObject testValueDb = MongoUtil.convertJsonToBson(testValue);
+        testValueDb.put("data", data);
 
-        JsonObject docWithDate = MongoUtil.convertBsonToJson(obj);
+        JsonObject document = MongoUtil.convertBsonToJson(testValueDb);
+        JsonObject save = createSaveQuery(document);
+        JsonObject matcher = new JsonObject(testValue);
+        JsonObject query = createMatcher(matcher);
 
-        JsonObject json = new JsonObject()
-                .putString("collection", COLLECTION)
-                .putString("action", "save").putObject("document", docWithDate);
-
-        eb.send(ADDRESS, json, new Handler<Message<JsonObject>>() {
-          public void handle(Message<JsonObject> reply) {
-            assertEquals(reply.body().toString(), "ok", reply.body().getString("status"));
-
-            assertStored(testValue, data, obj);
-          }
-        });
+        eb.send(ADDRESS, save, assertStored(query, testValueDb, data));
       }
     });
-
   }
 
-  private void assertStored(String testValue, final Object data, final DBObject sentObject) {
-    JsonObject matcher = new JsonObject(testValue);
-    JsonObject query = new JsonObject()
-            .putString("collection", COLLECTION)
+  private JsonObject createSaveQuery(JsonObject document) {
+    return new JsonObject()
+            .putString("collection", PersistorTestParent.COLLECTION)
+            .putString("action", "save")
+            .putObject("document", document);
+  }
+
+  private JsonObject createMatcher(JsonObject matcher) {
+    return new JsonObject()
+            .putString("collection", PersistorTestParent.COLLECTION)
             .putString("action", "find")
             .putObject("matcher", matcher);
+  }
 
-    eb.send(ADDRESS, query, new Handler<Message<JsonObject>>() {
-              public void handle(Message<JsonObject> reply) {
-                assertEquals(reply.body().toString(), "ok", reply.body().getString("status"));
-                JsonArray results = reply.body().getArray("results");
+  private Handler<Message<JsonObject>> assertStored(final JsonObject query, final DBObject sentDbObject, final Object dataSaved) {
+    return new Handler<Message<JsonObject>>() {
+      public void handle(Message<JsonObject> reply) {
+        assertEquals(reply.body().toString(), "ok", reply.body().getString("status"));
 
-                if (results.size() > 0) {
-                  JsonObject result = results.get(0);
-                  DBObject dbObj = MongoUtil.convertJsonToBson(result);
-                  dbObj.removeField("_id");
-                  Object storedData = dbObj.get("data");
-                  if (storedData instanceof Binary) {
-                    VertxAssert.assertArrayEquals((byte[]) data, ((Binary) storedData).getData());
-                  } else {
-                    VertxAssert.assertEquals(sentObject, dbObj);
+        eb.send(ADDRESS, query, new Handler<Message<JsonObject>>() {
+                  public void handle(Message<JsonObject> reply) {
+                    assertEquals(reply.body().toString(), "ok", reply.body().getString("status"));
+                    JsonArray results = reply.body().getArray("results");
+
+                    if (results.size() > 0) {
+                      JsonObject result = results.get(0);
+                      DBObject dbObj = MongoUtil.convertJsonToBson(result);
+                      dbObj.removeField("_id");
+                      Object storedData = dbObj.get("data");
+                      if (storedData instanceof Binary) {
+                        VertxAssert.assertArrayEquals((byte[]) dataSaved, ((Binary) storedData).getData());
+                      } else {
+                        VertxAssert.assertEquals(sentDbObject, dbObj);
+                      }
+                      testComplete();
+                    } else {
+                      VertxAssert.fail("Stored object not found in DB");
+                    }
                   }
-                  testComplete();
-                } else {
-                  VertxAssert.fail("Stored object not found in DB");
                 }
-              }
-            }
-
-    );
+        );
+      }
+    };
   }
 }
 
