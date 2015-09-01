@@ -3,6 +3,8 @@
 This module allows data to be saved, retrieved, searched for, and deleted in a MongoDB instance. MongoDB is a great match
 for persisting vert.x data since it natively handles JSON (BSON) documents.
 
+# WARNING - Vertx-3 now has new Mongo 'modules', this mod should only be used for vertx 2.x 
+
 ####To use this module you must have a MongoDB instance running on your network.
 
 This is a multi-threaded worker module.
