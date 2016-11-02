@@ -1,23 +1,23 @@
-# MongoDB Persistor
+# Vert.x 2.x is **deprecated** - use instead http://vertx.io/docs/vertx-mongo-client/java/
+
+## MongoDB Persistor
 
 This module allows data to be saved, retrieved, searched for, and deleted in a MongoDB instance. MongoDB is a great match
 for persisting vert.x data since it natively handles JSON (BSON) documents.
 
-# WARNING - Vertx-3 now has new Mongo 'modules', this mod should only be used for vertx 2.x 
-
-####To use this module you must have a MongoDB instance running on your network.
+##### To use this module you must have a MongoDB instance running on your network.
 
 This is a multi-threaded worker module.
 
-## Dependencies
+### Dependencies
 
 This module requires a MongoDB server to be available on the network.
 
-## Name
+### Name
 
 The module name is `mongo-persistor`.
 
-## Configuration
+### Configuration
 
 The mongo-persistor module takes the following configuration:
 
@@ -59,7 +59,7 @@ Let's take a look at each field in turn:
 * `read_preference` is the read preferences, see http://docs.mongodb.org/manual/core/read-preference/. Default is "primary".
 * `use_mongo_types` enable the use of mongo types such as Date, byte array, array list. Note that if enabled this will incur a performance overhead to all queries. Default is `false`.
 
-### Replsets or sharding
+#### Replsets or sharding
 
 If you want to use sharding or a replica set then you need to provide a list of seed addresses, these take
 priority over the host/port combination.  For example:
@@ -76,11 +76,11 @@ priority over the host/port combination.  For example:
 
 The seeds variable takes a list of objects which specify the host and port of each member of your seed list.
 
-## Operations
+### Operations
 
 The module supports the following operations
 
-### Save
+#### Save
 
 Saves a document in the database.
 
@@ -136,7 +136,7 @@ Where
 * `message` is an error message.
 
 
-### Update
+#### Update
 
 Updates a document in the database.
 Uses the Mongodb update function: http://www.mongodb.org/display/DOCS/Updating
@@ -182,7 +182,7 @@ An example would be:
 
 
 
-### Find
+#### Find
 
 Finds matching documents in the database.
 
@@ -282,7 +282,7 @@ Equivalence in mongoDB:
 
 db.order.find().skip(10).limit(10)
 
-#### Batching
+##### Batching
 
 If a find returns many documents we do not want to load them all up into memory at once and send them in a single JSON message since this could result in the server running out of RAM.
 
@@ -319,7 +319,7 @@ For instance, in JavaScript you might do something like:
 If there is more data to be requested and you do not reply to get the next batch within a timeout (see `timeout parameter`), then the underlying MongoDB cursor will be closed, and any further attempts to request more will fail.
 
 
-### Find One
+#### Find One
 
 Finds a single matching document in the database.
 
@@ -368,7 +368,7 @@ If an error occurs in finding the documents a reply is returned:
 Where
 *`message` is an error message.
 
-### Find and modify
+#### Find and modify
 
 The findAndModify command atomically modifies and returns a single document. By default, the returned document does not include the modifications made on the update. To return the document with the modifications made on the update, use the `new` option. See http://docs.mongodb.org/manual/reference/command/findAndModify/ for details:
 
@@ -410,7 +410,7 @@ An example would be:
 
 This would find a document in the `counters` collection with an `_id` of "people" and increment its `seq` field and reply successfully with the new document, as `new` was set to true.
 
-### Count
+#### Count
 
 Counts the number of documents within a collection:
 
@@ -558,7 +558,7 @@ If an error occurs in finding the documents a reply is returned:
 Where
 *`message` is an error message.
 
-### Get Collections List
+#### Get Collections List
 
 Returns the list of collection names in the db:
 
@@ -657,7 +657,7 @@ If an error occurs in finding the documents a reply is returned:
 Where
 * `message` is an error message.
 
-### Drop Collection
+#### Drop Collection
 
 Drops a collection from the db:
 
@@ -699,7 +699,7 @@ Where
 * `message` is an error message.
 
 
-### Command
+#### Command
 
 Runs an arbitrary MongoDB command.
 
@@ -723,7 +723,7 @@ You would expect a result something like:
         "status":"ok"
     }
 
-### writeConcern
+#### writeConcern
 
 The operations save, update and delete have an optional field called "writeConcern". Setting this property in your request
 changes the "consistency" of that operation.
